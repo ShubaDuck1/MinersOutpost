@@ -5,12 +5,33 @@ TILE_WIDTH = 80;
 TILE_HEIGHT = 45;
 
 class Tile:
-    valid_type = ['grass', 'road', 'building'];
+    valid_type = ['grass', 'road', 'water'];
     adjacent = [(1, 0), (0, 1), (-1, 0), (0, -1)];
     
     def __init__(self):
         self._type = 'grass';
         self.is_fog = True;
+        self.structure = None;
+        
+    def set_structure(self, structure):
+        if self.structure:
+            return;
+        self.structure = structure;
+    
+    def remove_structure(self):
+        self.structure = None;
+        
+    def is_interactable(self):
+        if not self.structure:
+            return False;
+        return self.structure.is_interactable;
+    
+    def update(self):
+        if not self.structure:
+            return;
+        
+        if self.structure.is_destroyed:
+            self.remove_structure();
     
     @property
     def type(self):
@@ -23,14 +44,22 @@ class Tile:
         self._type = value;
         
 def pixel_to_tile(position):
-    return position[0] // TILE_SIZE, position[1] // TILE_SIZE;
+    return int(position[0] // TILE_SIZE), int(position[1] // TILE_SIZE);
         
 def draw_tile(screen, grid):
     for y in range(len(grid)):
         for x in range(len(grid[y])):
             g = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
             pygame.draw.rect(screen, pygame.Color('green'), g);
+
+def draw_structure(screen, grid):
+    for y in range(len(grid)):
+        for x in range(len(grid[y])):
+            curr_structure = grid[y][x].structure;
+            if curr_structure:
+                curr_structure.draw(screen, (x, y));
     
+def draw_hover(screen):
     x, y = pixel_to_tile(pygame.mouse.get_pos());
     g = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     pygame.draw.rect(screen, pygame.Color('white'), g, 2)

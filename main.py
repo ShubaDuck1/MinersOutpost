@@ -2,18 +2,21 @@ import pygame;
 import tiles;
 import spaces;
 import units;
+import player_actions;
+import structures;
 
 pygame.init()
 
 WIDTH, HEIGHT = 1280, 720;
 FPS = 60;
 
-clock = pygame.Clock();
-space = spaces.Space();
-is_running = True;
-
 screen = pygame.display.set_mode((WIDTH, HEIGHT));
 grid = [[tiles.Tile() for a in range(tiles.TILE_WIDTH)] for b in range(tiles.TILE_HEIGHT)];
+
+clock = pygame.Clock();
+space = spaces.Space(grid);
+player_action = player_actions.PlayerAction();
+is_running = True;
 
 def event_handler():
     global is_running;
@@ -25,12 +28,15 @@ def event_handler():
         if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
             is_running = False;
             break;
+        if ev.type == pygame.KEYDOWN and ev.key == pygame.K_1:
+            x, y = tiles.pixel_to_tile(pygame.mouse.get_pos());
+            grid[y][x].set_structure(structures.Tree())
     
     if pygame.mouse.get_just_pressed()[0]:
-        space.add(units.Unit(tiles.TILE_SIZE * 2, pygame.mouse.get_pos(), 5));
+        space.add(units.Miner('default', pygame.mouse.get_pos()));
     
     if pygame.mouse.get_just_pressed()[2]:
-        space.find_path(grid, tiles.pixel_to_tile(pygame.mouse.get_pos()))
+        player_action.add(tiles.pixel_to_tile(pygame.mouse.get_pos()));
         
 def show_fps(screen):
     font = pygame.font.SysFont("Arial", 18, bold=True);
@@ -39,7 +45,9 @@ def show_fps(screen):
         
 def renderer():
     tiles.draw_tile(screen, grid);
+    tiles.draw_hover(screen);
     space.draw_space(screen);
+    tiles.draw_structure(screen, grid);
     show_fps(screen);
     
     pygame.display.flip();
@@ -51,6 +59,7 @@ def run(screen):
         
         delta_time = clock.tick(FPS) / 1000;
         
+        player_action.update(space);
         space.step(delta_time);
         renderer();
             
