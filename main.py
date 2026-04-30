@@ -2,7 +2,7 @@ import pygame;
 import tiles;
 import spaces;
 import units;
-import player_actions;
+import players;
 import structures;
 
 pygame.init()
@@ -12,10 +12,11 @@ FPS = 60;
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT));
 grid = [[tiles.Tile() for a in range(tiles.TILE_WIDTH)] for b in range(tiles.TILE_HEIGHT)];
+grid[20][40].set_structure(structures.Base());
 
 clock = pygame.Clock();
 space = spaces.Space(grid);
-player_action = player_actions.PlayerAction();
+player_action = players.PlayerAction(space);
 is_running = True;
 
 def event_handler():
@@ -59,8 +60,9 @@ def run(screen):
         
         delta_time = clock.tick(FPS) / 1000;
         
-        player_action.update(space);
+        player_action.update();
         space.step(delta_time);
+        space.update();
         renderer();
             
     quit();

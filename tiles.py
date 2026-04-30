@@ -7,6 +7,7 @@ TILE_HEIGHT = 45;
 class Tile:
     valid_type = ['grass', 'road', 'water'];
     adjacent = [(1, 0), (0, 1), (-1, 0), (0, -1)];
+    diagonal = [(1, 1), (1, -1), (-1, 1), (-1, -1)];
     
     def __init__(self):
         self._type = 'grass';
