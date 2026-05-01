@@ -2,6 +2,7 @@ import queue;
 import resources;
 import commands;
 import tiles;
+import random;
 
 class Unit:
     def __init__(self, speed, position, radius):
@@ -16,9 +17,11 @@ class Unit:
     def set_path(self, path):
         for destination in path:
             self.task.put(commands.Move(self, destination));
+            
+    
     
     def update(self, delta_time):
-        if not self.task.empty():
+        if self.is_busy():
             curr_task = self.task.queue[0];
             curr_task.execute(delta_time);
             
@@ -38,6 +41,17 @@ class Miner(Unit):
             super().__init__(2, position, 5);
             
         self.inventory = resources.Resource();
+        self.counter = 0;
+        
+    def update(self, delta_time):
+        if not self.is_busy():
+            self.counter += delta_time;
+            if(self.counter > 1):
+                self.counter = 0;
+                if random.random() < 0.5:
+                    self.wander();
+                
+        super().update(delta_time);
         
     def set_interact(self, structure):
         self.task.put(commands.Interact(self, structure));
@@ -61,3 +75,10 @@ class Miner(Unit):
         if tile.structure:
             return False;
         return True;
+    
+    def wander(self):
+        curr_x, curr_y = tiles.pixel_to_tile(self.position);
+        x = random.randint(-2, 2);
+        y = random.randint(-2, 2);
+
+        self.task.put(commands.Move(self, (curr_x + x, curr_y + y)));
