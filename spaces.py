@@ -17,6 +17,10 @@ class Space:
     def add(self, miner: units.Unit):
         self.space_miners.append(miner);
         
+    def step(self, delta_time):
+        for miner in self.space_miners:
+            miner.update(delta_time);
+        
     def update(self):
         for miner in self.space_miners:
             if miner.is_go_to_base():
@@ -28,10 +32,6 @@ class Space:
             for x in range(len(self.grid[y])):
                 self.grid[y][x].update();
         
-    def step(self, delta_time):
-        for miner in self.space_miners:
-            miner.update(delta_time);
-            
     def count_not_busy(self):
         cnt = 0;
         for miner in self.space_miners:
