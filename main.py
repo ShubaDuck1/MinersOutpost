@@ -60,8 +60,8 @@ def run(screen):
         delta_time = clock.tick(FPS) / 1000;
         
         player_action.update();
-        space.step(delta_time);
         space.update();
+        space.step(delta_time);
         renderer();
             
     quit();
