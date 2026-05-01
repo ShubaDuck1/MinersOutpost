@@ -61,3 +61,5 @@ class Miner(Unit):
         if tile.structure:
             return False;
         return True;
+    
+    # bantumlum
