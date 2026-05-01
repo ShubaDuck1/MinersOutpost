@@ -46,9 +46,10 @@ class Miner(Unit):
     def update(self, delta_time):
         if not self.is_busy():
             self.counter += delta_time;
-            if random.random() < 0.5 and self.counter > 2:
-                self.wander();
+            if(self.counter > 1):
                 self.counter = 0;
+                if random.random() < 0.5:
+                    self.wander();
                 
         super().update(delta_time);
         
