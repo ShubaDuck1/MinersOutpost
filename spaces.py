@@ -88,7 +88,7 @@ class Space:
                 
                 curr_tile = self.grid[new_y][new_x];
                 
-                if top <= new_y <= bottom and left <= new_x <= right and curr_tile.is_interactable():
+                if top <= new_y <= bottom and left <= new_x <= right and curr_tile.is_interactable() and not curr_tile.structure.is_occupied:
                     found_path = True;
                     break;
                 

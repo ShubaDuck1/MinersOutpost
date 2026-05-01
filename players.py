@@ -25,15 +25,19 @@ class Harvest(PlayerCommand):
         for x in range(self.left, self.right + 1):
             for y in range(self.top, self.bottom + 1):
                 task = space.grid[y][x].structure;
-                if task.is_occupied:
-                    return True;
-        return False;
+                if not task:
+                    continue;
+                if not task.is_occupied:
+                    return False;
+        return True;
         
     def execute(self, space):
         cnt = space.count_not_busy();
         i = 0;
         
         for i in range(cnt):
+            if self.check(space):
+                return;
             tmp = space.find_harvest(self.top, self.left, self.bottom, self.right);
             
             if not tmp:
@@ -42,6 +46,7 @@ class Harvest(PlayerCommand):
                 
             miner, path, dest_x, dest_y = tmp;
             curr_task = space.grid[dest_y][dest_x].structure;
+            curr_task.is_occupied = True;
             miner.set_path(path);
             miner.set_interact(curr_task);
 

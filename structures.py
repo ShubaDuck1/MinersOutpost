@@ -16,6 +16,7 @@ class Tree(Structure):
     def __init__(self):
         super().__init__(50);
         self.progress = 0;
+        self.is_occupied = False;
         
     def draw(self, screen, position):
         x = position[0] * tiles.TILE_SIZE + tiles.TILE_SIZE // 2;
