@@ -11,11 +11,10 @@ WIDTH, HEIGHT = 1280, 720;
 FPS = 60;
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT));
-grid = [[tiles.Tile() for a in range(tiles.TILE_WIDTH)] for b in range(tiles.TILE_HEIGHT)];
-grid[20][40].set_structure(structures.Base());
-
 clock = pygame.Clock();
-space = spaces.Space(grid);
+
+grid = [[tiles.Tile() for a in range(tiles.TILE_WIDTH)] for b in range(tiles.TILE_HEIGHT)];
+space = spaces.Space(grid, (40, 20));
 player_action = players.PlayerAction(space);
 is_running = True;
 

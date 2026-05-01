@@ -21,10 +21,17 @@ class Harvest(PlayerCommand):
         self.bottom = bottom;
         self.right = right;
         
+    def check(self, space):
+        for x in range(self.left, self.right + 1):
+            for y in range(self.top, self.bottom + 1):
+                task = space.grid[y][x].structure;
+                if task.is_occupied:
+                    return True;
+        return False;
+        
     def execute(self, space):
         cnt = space.count_not_busy();
         i = 0;
-        print(cnt);
         
         for i in range(cnt):
             tmp = space.find_harvest(self.top, self.left, self.bottom, self.right);

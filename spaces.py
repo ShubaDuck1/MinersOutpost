@@ -9,8 +9,10 @@ class Space:
     def __init__(self, grid, base_position):
         self.space_miners = [];
         self.grid = grid;
+        
         self.base_position = base_position;
-        self.grid[base_position[1]][base_position[0]].set_structure(structures.Base());
+        self.base = structures.Base();
+        self.grid[base_position[1]][base_position[0]].set_structure(self.base);
     
     def add(self, miner: units.Unit):
         self.space_miners.append(miner);
@@ -22,9 +24,9 @@ class Space:
     def update(self):
         for miner in self.space_miners:
             if miner.is_go_to_base():
-                path = self.find_path(miner, tiles.pixel_to_tile(miner.position), self.base);
+                path = self.find_path(miner, tiles.pixel_to_tile(miner.position), self.base_position);
                 miner.set_path(path);
-                miner.set_give_all(self.grid[self.base[1]][self.base[0]].structure);
+                miner.set_give_all(self.base);
             
         for y in range(len(self.grid)):
             for x in range(len(self.grid[y])):
@@ -51,9 +53,6 @@ class Space:
             curr_x, curr_y = tiles.pixel_to_tile(miner.position);
             que.put((0, curr_x, curr_y))
             visited[curr_y * tiles.TILE_WIDTH + curr_x] = (curr_x, curr_y, miner);
-        
-        # if que.empty():
-        #     return;
         
         while not que.empty():
             cost, curr_x, curr_y = que.get();
@@ -122,17 +121,32 @@ class Space:
         found_path = False;
         visited = [None for _ in range(tiles.TILE_WIDTH * tiles.TILE_HEIGHT)];
         path = [];
-        que = queue.Queue();
+        que = queue.PriorityQueue();
         
         curr_x, curr_y = position;
-        que.put((curr_x, curr_y))
+        que.put((0, curr_x, curr_y))
         visited[curr_y * tiles.TILE_WIDTH + curr_x] = (curr_x, curr_y);
         
-        if que.empty():
-            return;
-        
         while not que.empty():
-            curr_x, curr_y= que.get();
+            cost, curr_x, curr_y= que.get();
+            
+            for x, y in tiles.Tile.diagonal:
+                new_x = curr_x + x;
+                new_y = curr_y + y;
+                
+                if not (0 <= new_x < tiles.TILE_WIDTH):
+                    continue;
+                
+                if not (0 <= new_y < tiles.TILE_HEIGHT):
+                    continue;
+                
+                curr_tile = self.grid[new_y][new_x];
+                if not miner.can_go_through(curr_tile):
+                    continue;
+                
+                if not visited[new_y * tiles.TILE_WIDTH + new_x]:
+                    que.put((cost + math.sqrt(2), new_x, new_y));
+                    visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y);
             
             for x, y in tiles.Tile.adjacent:
                 new_x = curr_x + x;
@@ -153,7 +167,7 @@ class Space:
                     continue;
                 
                 if not visited[new_y * tiles.TILE_WIDTH + new_x]:
-                    que.put((new_x, new_y));
+                    que.put((cost + 1, new_x, new_y));
                     visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y);
             
             if found_path:
