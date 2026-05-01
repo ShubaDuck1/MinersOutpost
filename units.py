@@ -1,6 +1,7 @@
 import queue;
 import resources;
 import commands;
+import tiles;
 
 class Unit:
     def __init__(self, speed, position, radius):
@@ -25,7 +26,7 @@ class Unit:
                 self.task.get();
         
 class Miner(Unit):
-    valid_type = ['default', 'horse', 'cheat']
+    valid_type = ['default', 'horse']
     
     def __init__(self, type, position):
         if type not in self.valid_type:
@@ -35,8 +36,6 @@ class Miner(Unit):
             super().__init__(1, position, 5);
         elif type == 'horse':
             super().__init__(2, position, 5);
-        elif type == 'cheat':
-            super().__init__(7, position, 5);
             
         self.inventory = resources.Resource();
         

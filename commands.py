@@ -52,7 +52,6 @@ class Interact(Command):
         
         if self.structure.is_destroyed or self.unit.is_full():
             self.is_done = True;
-            self.structure.is_occupied = False;
             
 class GiveAll(Command):
     def __init__(self, miner, structure):
