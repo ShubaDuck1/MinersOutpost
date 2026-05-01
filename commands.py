@@ -7,7 +7,7 @@ def magnitude(vector):
 def normalize(vector: tuple[int, int]):
     mag = magnitude(vector);
     if mag == 0:
-        return;
+        mag = 0.1;
     
     return round(vector[0] / mag, 1), round(vector[1] / mag, 1);
 
@@ -50,11 +50,9 @@ class Interact(Command):
     def execute(self, delta_time):
         self.structure.interact(self.unit, delta_time);
         
-        if self.structure.is_destroyed:
+        if self.structure.is_destroyed or self.unit.is_full():
             self.is_done = True;
-            
-        if self.unit.is_full():
-            self.is_done = True;
+            self.structure.is_occupied = False;
             
 class GiveAll(Command):
     def __init__(self, miner, structure):
@@ -65,7 +63,6 @@ class GiveAll(Command):
         for resource in self.structure.inventory:
             type = self.unit.inventory.type;
             amount = self.unit.inventory.amount;
-            print(type, amount);
             if resource.add(type, amount):
                 self.unit.inventory.remove(type, amount);
                 break;

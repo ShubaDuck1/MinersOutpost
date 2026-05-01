@@ -1,28 +1,57 @@
 import queue;
 
+class PlayerCommand:
+    def __init__(self):
+        self.is_done = False;
+    
+    def execute(self):
+        raise NotImplementedError("execute() Not Implemented");
+    
+class Harvest(PlayerCommand):
+    def __init__(self, top, left, bottom, right):
+        super().__init__();
+        if top > bottom:
+            top, bottom = bottom, top;
+            
+        if left > right:
+            right, left = left, right;
+        
+        self.top = top;
+        self.left = left;
+        self.bottom = bottom;
+        self.right = right;
+        
+    def execute(self, space):
+        cnt = space.count_not_busy();
+        i = 0;
+        print(cnt);
+        
+        for i in range(cnt):
+            tmp = space.find_harvest(self.top, self.left, self.bottom, self.right);
+            
+            if not tmp:
+                self.is_done = True;
+                break;
+                
+            miner, path, dest_x, dest_y = tmp;
+            curr_task = space.grid[dest_y][dest_x].structure;
+            miner.set_path(path);
+            miner.set_interact(curr_task);
+
 class PlayerAction:
     def __init__(self, space):
-        self.action_queue = queue.Queue();
+        self.task = queue.Queue();
         self.space = space;
-        self.current_action = None;
     
-    def add(self, destination):
-        self.action_queue.put(destination);
+    def add_harvest(self, top, left, bottom, right):
+        self.task.put(Harvest(top, left, bottom, right));
         
     def update(self):
-        cnt = self.space.count_not_busy();
-        i = 0;
-        
-        while not self.action_queue.empty() and i < cnt:
-            if not self.current_action:
-                self.current_action = self.action_queue.get();
-            tmp = self.space.find_path_miner(self.current_action);
-            if tmp:
-                dest_x, dest_y = self.current_action;
-                curr_task = self.space.grid[dest_y][dest_x].structure;
-                i += 1;
-                miner, path = tmp;
-                miner.set_path(path);
-                miner.set_interact(curr_task);
+        if not self.task.empty():
+            curr_task = self.task.queue[0];
+            curr_task.execute(self.space);
+            
+            if curr_task.is_done:
+                self.task.get();
         
                 

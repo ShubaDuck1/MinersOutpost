@@ -3,12 +3,14 @@ import pygame;
 import tiles;
 import queue;
 import math;
+import structures;
 
 class Space:
-    def __init__(self, grid):
+    def __init__(self, grid, base_position):
         self.space_miners = [];
         self.grid = grid;
-        self.base = (40, 20);
+        self.base_position = base_position;
+        self.grid[base_position[1]][base_position[0]].set_structure(structures.Base());
     
     def add(self, miner: units.Unit):
         self.space_miners.append(miner);
@@ -36,11 +38,7 @@ class Space:
         
         return cnt;
             
-    def find_path_miner(self, destination):
-        curr_tile = self.grid[destination[1]][destination[0]];
-        if not curr_tile.is_interactable():
-            return None;
-        
+    def find_harvest(self, top, left, bottom, right):
         found_path = False;
         visited = [None for _ in range(tiles.TILE_WIDTH * tiles.TILE_HEIGHT)];
         path = [];
@@ -51,14 +49,15 @@ class Space:
                 continue;
             
             curr_x, curr_y = tiles.pixel_to_tile(miner.position);
-            que.put((0, curr_x, curr_y, miner))
-            visited[curr_y * tiles.TILE_WIDTH + curr_x] = (curr_x, curr_y);
+            que.put((0, curr_x, curr_y))
+            visited[curr_y * tiles.TILE_WIDTH + curr_x] = (curr_x, curr_y, miner);
         
-        if que.empty():
-            return;
+        # if que.empty():
+        #     return;
         
         while not que.empty():
-            cost, curr_x, curr_y, curr_miner = que.get();
+            cost, curr_x, curr_y = que.get();
+            curr_miner = visited[curr_y * tiles.TILE_WIDTH + curr_x][2];
             
             for x, y in tiles.Tile.diagonal:
                 new_x = curr_x + x;
@@ -75,8 +74,8 @@ class Space:
                     continue;
                 
                 if not visited[new_y * tiles.TILE_WIDTH + new_x]:
-                    que.put((cost + math.sqrt(2), new_x, new_y, curr_miner));
-                    visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y);
+                    que.put((cost + math.sqrt(2), new_x, new_y));
+                    visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y, curr_miner);
             
             for x, y in tiles.Tile.adjacent:
                 new_x = curr_x + x;
@@ -88,17 +87,18 @@ class Space:
                 if not (0 <= new_y < tiles.TILE_HEIGHT):
                     continue;
                 
-                if (new_x, new_y) == destination:
+                curr_tile = self.grid[new_y][new_x];
+                
+                if top <= new_y <= bottom and left <= new_x <= right and curr_tile.is_interactable():
                     found_path = True;
                     break;
                 
-                curr_tile = self.grid[new_y][new_x];
                 if not curr_miner.can_go_through(curr_tile):
                     continue;
                 
                 if not visited[new_y * tiles.TILE_WIDTH + new_x]:
-                    que.put((cost + 1, new_x, new_y, curr_miner));
-                    visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y);
+                    que.put((cost + 1, new_x, new_y));
+                    visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y, curr_miner);
             
             if found_path:
                 break;
@@ -107,12 +107,12 @@ class Space:
             return None;
         
         path.append((curr_x, curr_y))
-        while not (curr_x, curr_y) == visited[curr_y * tiles.TILE_WIDTH + curr_x]:
-            curr_x, curr_y = visited[curr_y * tiles.TILE_WIDTH + curr_x];
+        while not (curr_x, curr_y, curr_miner) == visited[curr_y * tiles.TILE_WIDTH + curr_x]:
+            curr_x, curr_y, curr_miner = visited[curr_y * tiles.TILE_WIDTH + curr_x];
             path.append((curr_x, curr_y));
         
         path.reverse();        
-        return curr_miner, path;
+        return curr_miner, path, new_x, new_y;
     
     def find_path(self, miner, position, destination):
         curr_tile = self.grid[destination[1]][destination[0]];

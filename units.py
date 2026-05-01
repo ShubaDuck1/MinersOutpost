@@ -36,7 +36,7 @@ class Miner(Unit):
         elif type == 'horse':
             super().__init__(2, position, 5);
         elif type == 'cheat':
-            super().__init__(10, position, 5);
+            super().__init__(7, position, 5);
             
         self.inventory = resources.Resource();
         
