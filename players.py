@@ -51,10 +51,10 @@ class Harvest(PlayerCommand):
         miner.set_interact(curr_task);
 
 class BuildRoad(PlayerCommand):
-    def __init__(self, position):
+    def __init__(self, position, road):
         super().__init__();
         self.position = position;
-        self.road = structures.ConstructRoad();
+        self.road = road;
         
     def get_resource(self, space):
         res = resources.Resource();
@@ -78,10 +78,6 @@ class BuildRoad(PlayerCommand):
         if self.road.check():
             self.is_done = True;
             return;
-        
-        if not curr_task:
-            space.grid[curr_y][curr_x].structure = self.road;
-            curr_task = self.road;
             
         cnt = space.count_not_busy();
         if not cnt:
@@ -122,7 +118,9 @@ class PlayerAction:
         curr_tile = self.space.grid[position[1]][position[0]];
         if curr_tile.structure or curr_tile.type == 'road':
             return;
-        self.task.append(BuildRoad(position));
+        
+        curr_tile.structure = structures.ConstructRoad();
+        self.task.append(BuildRoad(position, curr_tile.structure));
         
     def update(self):
         for i in range(len(self.task)):
