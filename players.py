@@ -1,5 +1,7 @@
 import structures
-import resources;
+import tiles;
+import math;
+import queue;
 
 class PlayerCommand:
     def __init__(self):
@@ -22,11 +24,86 @@ class Harvest(PlayerCommand):
         self.bottom = bottom;
         self.right = right;
         
+    def find_path_harvest(self, space):
+        found_path = False;
+        visited = [None for _ in range(tiles.TILE_WIDTH * tiles.TILE_HEIGHT)];
+        path = [];
+        que = queue.PriorityQueue();
+        
+        for miner in space.space_miners:
+            if miner.is_busy():
+                continue;
+            
+            curr_x, curr_y = tiles.pixel_to_tile(miner.position);
+            que.put((0, curr_x, curr_y))
+            visited[curr_y * tiles.TILE_WIDTH + curr_x] = (curr_x, curr_y, miner);
+        
+        while not que.empty():
+            cost, curr_x, curr_y = que.get();
+            curr_miner = visited[curr_y * tiles.TILE_WIDTH + curr_x][2];
+            
+            for x, y in tiles.Tile.diagonal:
+                new_x = curr_x + x;
+                new_y = curr_y + y;
+                
+                if not (0 <= new_x < tiles.TILE_WIDTH):
+                    continue;
+                
+                if not (0 <= new_y < tiles.TILE_HEIGHT):
+                    continue;
+                
+                curr_tile = space.grid[new_y][new_x];
+                if not curr_miner.can_go_through(curr_tile):
+                    continue;
+                
+                if not visited[new_y * tiles.TILE_WIDTH + new_x]:
+                    que.put((cost + math.sqrt(2) / (curr_tile.modify_speed() * curr_miner.speed), new_x, new_y));
+                    visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y, curr_miner);
+            
+            for x, y in tiles.Tile.adjacent:
+                new_x = curr_x + x;
+                new_y = curr_y + y;
+                
+                if not (0 <= new_x < tiles.TILE_WIDTH):
+                    continue;
+                
+                if not (0 <= new_y < tiles.TILE_HEIGHT):
+                    continue;
+                
+                curr_tile = space.grid[new_y][new_x];
+                curr_task = curr_tile.structure;
+                
+                if self.top <= new_y <= self.bottom and self.left <= new_x <= self.right:
+                    if curr_task and curr_task.is_harvestable and not curr_task.is_occupied:
+                        found_path = True;
+                        break;
+                
+                if not curr_miner.can_go_through(curr_tile):
+                    continue;
+                
+                if not visited[new_y * tiles.TILE_WIDTH + new_x]:
+                    que.put((cost + 1 / (curr_tile.modify_speed() * curr_miner.speed), new_x, new_y));
+                    visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y, curr_miner);
+            
+            if found_path:
+                break;
+        
+        if not found_path:
+            return None;
+        
+        path.append((curr_x, curr_y))
+        while not (curr_x, curr_y, curr_miner) == visited[curr_y * tiles.TILE_WIDTH + curr_x]:
+            curr_x, curr_y, curr_miner = visited[curr_y * tiles.TILE_WIDTH + curr_x];
+            path.append((curr_x, curr_y));
+        
+        path.reverse();        
+        return curr_miner, path, new_x, new_y;
+        
     def check(self, space):
         for x in range(self.left, self.right + 1):
             for y in range(self.top, self.bottom + 1):
                 task = space.grid[y][x].structure;
-                if task and not task.is_occupied:
+                if task and task.is_harvestable and not task.is_occupied:
                     return False;
         return True;
         
@@ -38,10 +115,11 @@ class Harvest(PlayerCommand):
         if self.check(space):
             return;
         
-        tmp = space.find_path_range(self.top, self.left, self.bottom, self.right);
+        tmp = self.find_path_harvest(space);
         
         if not tmp:
             self.is_done = True;
+            print(f'is_done');
             return;
             
         miner, path, dest_x, dest_y = tmp;
@@ -50,14 +128,16 @@ class Harvest(PlayerCommand):
         miner.set_path(path);
         miner.set_interact(curr_task);
 
-class BuildRoad(PlayerCommand):
+class Build(PlayerCommand):
     def __init__(self, position, road):
         super().__init__();
         self.position = position;
         self.road = road;
         
-    def get_resource(self, space):
-        res = resources.Resource();
+    def get_resource(self, space, miner):
+        type = None;
+        amount = 0;
+        
         for i in self.road.inventory:
             if not i.amount:
                 continue;
@@ -66,10 +146,85 @@ class BuildRoad(PlayerCommand):
                 if j.type != i.type:
                     continue;
                 
-                res.type = j.type;
-                res.amount = min(i.amount, j.amount);
+                type = j.type;
+                amount = min(i.amount, j.amount, miner.full);
         
-        return res;
+        return type, amount;
+        
+    def find_path(self, space, base_position):
+        found_path = False;
+        visited = [None for _ in range(tiles.TILE_WIDTH * tiles.TILE_HEIGHT)];
+        path = [];
+        que = queue.PriorityQueue();
+        
+        for miner in space.space_miners:
+            if miner.is_busy():
+                continue;
+            
+            curr_x, curr_y = tiles.pixel_to_tile(miner.position);
+            que.put((0, curr_x, curr_y))
+            visited[curr_y * tiles.TILE_WIDTH + curr_x] = (curr_x, curr_y, miner);
+        
+        while not que.empty():
+            cost, curr_x, curr_y = que.get();
+            curr_miner = visited[curr_y * tiles.TILE_WIDTH + curr_x][2];
+            
+            for x, y in tiles.Tile.diagonal:
+                new_x = curr_x + x;
+                new_y = curr_y + y;
+                
+                if not (0 <= new_x < tiles.TILE_WIDTH):
+                    continue;
+                
+                if not (0 <= new_y < tiles.TILE_HEIGHT):
+                    continue;
+                
+                curr_tile = space.grid[new_y][new_x];
+                if not curr_miner.can_go_through(curr_tile):
+                    continue;
+                
+                if not visited[new_y * tiles.TILE_WIDTH + new_x]:
+                    que.put((cost + math.sqrt(2) / (curr_tile.modify_speed() * curr_miner.speed), new_x, new_y));
+                    visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y, curr_miner);
+            
+            for x, y in tiles.Tile.adjacent:
+                new_x = curr_x + x;
+                new_y = curr_y + y;
+                
+                if not (0 <= new_x < tiles.TILE_WIDTH):
+                    continue;
+                
+                if not (0 <= new_y < tiles.TILE_HEIGHT):
+                    continue;
+                
+                curr_tile = space.grid[new_y][new_x];
+                curr_task = curr_tile.structure;
+                
+                if (new_x, new_y) == base_position:
+                    if curr_task and curr_task.is_interactable and not curr_task.is_occupied:
+                        found_path = True;
+                        break;
+                
+                if not curr_miner.can_go_through(curr_tile):
+                    continue;
+                
+                if not visited[new_y * tiles.TILE_WIDTH + new_x]:
+                    que.put((cost + 1 / (curr_tile.modify_speed() * curr_miner.speed), new_x, new_y));
+                    visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y, curr_miner);
+            
+            if found_path:
+                break;
+        
+        if not found_path:
+            return None;
+        
+        path.append((curr_x, curr_y))
+        while not (curr_x, curr_y, curr_miner) == visited[curr_y * tiles.TILE_WIDTH + curr_x]:
+            curr_x, curr_y, curr_miner = visited[curr_y * tiles.TILE_WIDTH + curr_x];
+            path.append((curr_x, curr_y));
+        
+        path.reverse();        
+        return curr_miner, path;
         
     def execute(self, space):
         curr_x, curr_y = self.position;
@@ -86,20 +241,13 @@ class BuildRoad(PlayerCommand):
         if curr_task.is_occupied:
             return;
         
-        base_x, base_y = space.base_position;
-        tmp = space.find_path_range(base_y, base_x, base_y, base_x);
-        
-        if not tmp:
+        miner, path = self.find_path(space, space.base_position);
+        type, amount = self.get_resource(space, miner);
+        if not amount:
             return;
         
-        resource = self.get_resource(space);
-        
-        if not resource.amount:
-            return;
-        
-        miner, path, dest_x, dest_y = tmp;
         miner.set_path(path);
-        miner.set_take_resource(space.base, resource);
+        miner.set_take_resource(space.base, type, amount);
         
         path = space.find_path(miner, path[-1], self.position);
         miner.set_path(path);
@@ -114,13 +262,21 @@ class PlayerAction:
     def add_harvest(self, top, left, bottom, right):
         self.task.append(Harvest(top, left, bottom, right));
         
-    def add_build_road(self, position):
+    def add_road(self, position):
         curr_tile = self.space.grid[position[1]][position[0]];
         if curr_tile.structure or curr_tile.type == 'road':
             return;
         
-        curr_tile.structure = structures.ConstructRoad();
-        self.task.append(BuildRoad(position, curr_tile.structure));
+        curr_tile.structure = structures.Constructor('road');
+        self.task.append(Build(position, curr_tile.structure));
+        
+    def add_spike(self, position):
+        curr_tile = self.space.grid[position[1]][position[0]];
+        if curr_tile.structure:
+            return;
+        
+        curr_tile.structure = structures.Constructor(structures.Spike());
+        self.task.append(Build(position, curr_tile.structure));
         
     def update(self):
         for i in range(len(self.task)):

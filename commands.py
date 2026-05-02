@@ -69,14 +69,15 @@ class GiveAll(Command):
         self.is_done = True;
         
 class TakeResource(Command):
-    def __init__(self, miner, structure, resource):
+    def __init__(self, miner, structure, type, amount):
         super().__init__(miner);
         self.structure = structure;
-        self.resource = resource;
+        self.type = type;
+        self.amount = amount;
         
     def execute(self, delta_time):
-        type = self.resource.type;
-        amount = self.resource.amount;
+        type = self.type;
+        amount = self.amount;
         
         for resource in self.structure.inventory:
             if resource.remove(type, amount):

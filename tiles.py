@@ -40,11 +40,6 @@ class Tile:
     
     def remove_structure(self):
         self.structure = None;
-        
-    def is_interactable(self):
-        if not self.structure:
-            return False;
-        return self.structure.is_interactable;
     
     def update(self):
         if not self.structure:
@@ -53,7 +48,7 @@ class Tile:
         if self.structure.is_destroyed:
             self.remove_structure();
             
-        if type(self.structure) in (structures.ConstructRoad, 1) and self.structure.check():
+        if type(self.structure) == structures.Constructor  and self.structure.check():
             self.structure.update(self);
         
 def pixel_to_tile(position):
