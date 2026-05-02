@@ -1,4 +1,5 @@
 import pygame;
+import structures;
 
 TILE_SIZE = 16;
 TILE_WIDTH = 80;
@@ -11,8 +12,26 @@ class Tile:
     
     def __init__(self):
         self._type = 'grass';
-        self.is_fog = True;
+        self.is_foggy = True;
         self.structure = None;
+        
+    @property
+    def type(self):
+        return self._type;
+    
+    @type.setter
+    def type(self, value):
+        if value not in Tile.valid_type:
+            raise ValueError(f'Invalid type: {value}');
+        self._type = value;
+        
+    def modify_speed(self):
+        if self.type == 'grass':
+            return 1;
+        elif self.type == 'road':
+            return 1.5;
+        elif self.type == 'water':
+            return 0.5;
         
     def set_structure(self, structure):
         if self.structure:
@@ -33,16 +52,9 @@ class Tile:
         
         if self.structure.is_destroyed:
             self.remove_structure();
-    
-    @property
-    def type(self):
-        return self._type;
-    
-    @type.setter
-    def type(self, value):
-        if value not in Tile.valid_type:
-            raise ValueError(f'Invalid type: {value}');
-        self._type = value;
+            
+        if type(self.structure) in (structures.ConstructRoad, 1) and self.structure.check():
+            self.structure.update(self);
         
 def pixel_to_tile(position):
     return int(position[0] // TILE_SIZE), int(position[1] // TILE_SIZE);
@@ -50,8 +62,17 @@ def pixel_to_tile(position):
 def draw_tile(screen, grid):
     for y in range(len(grid)):
         for x in range(len(grid[y])):
+            curr_tile = grid[y][x];
             g = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-            pygame.draw.rect(screen, pygame.Color('green'), g);
+            
+            if curr_tile.type == 'grass':
+                color = pygame.Color('green');
+            elif curr_tile.type == 'water':
+                color = (14, 135, 204);
+            elif curr_tile.type == 'road':
+                color = pygame.Color('saddlebrown');
+            
+            pygame.draw.rect(screen, color, g);
 
 def draw_structure(screen, grid):
     for y in range(len(grid)):

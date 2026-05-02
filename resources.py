@@ -1,9 +1,9 @@
 class Resource:
     valid_type = ['wood', 'stone', 'coal', 'iron'];
     
-    def __init__(self):
-        self.type = None;
-        self.amount = 0;
+    def __init__(self, type = None, amount = 0):
+        self.type = type;
+        self.amount = amount;
         
     def add(self, type, amount = 1):
         if type not in self.valid_type:

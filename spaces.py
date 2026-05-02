@@ -23,6 +23,10 @@ class Space:
         
     def update(self):
         for miner in self.space_miners:
+            curr_x, curr_y = tiles.pixel_to_tile(miner.position);
+            curr_tile = self.grid[curr_y][curr_x];
+            miner.modified_speed = miner.speed * curr_tile.modify_speed();
+            
             if miner.is_go_to_base():
                 path = self.find_path(miner, tiles.pixel_to_tile(miner.position), self.base_position);
                 miner.set_path(path);
@@ -40,7 +44,7 @@ class Space:
         
         return cnt;
             
-    def find_harvest(self, top, left, bottom, right):
+    def find_path_range(self, top, left, bottom, right):
         found_path = False;
         visited = [None for _ in range(tiles.TILE_WIDTH * tiles.TILE_HEIGHT)];
         path = [];
@@ -73,7 +77,7 @@ class Space:
                     continue;
                 
                 if not visited[new_y * tiles.TILE_WIDTH + new_x]:
-                    que.put((cost + math.sqrt(2), new_x, new_y));
+                    que.put((cost + math.sqrt(2) / (curr_tile.modify_speed() * curr_miner.speed), new_x, new_y));
                     visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y, curr_miner);
             
             for x, y in tiles.Tile.adjacent:
@@ -96,7 +100,7 @@ class Space:
                     continue;
                 
                 if not visited[new_y * tiles.TILE_WIDTH + new_x]:
-                    que.put((cost + 1, new_x, new_y));
+                    que.put((cost + 1 / (curr_tile.modify_speed() * curr_miner.speed), new_x, new_y));
                     visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y, curr_miner);
             
             if found_path:
@@ -145,7 +149,7 @@ class Space:
                     continue;
                 
                 if not visited[new_y * tiles.TILE_WIDTH + new_x]:
-                    que.put((cost + math.sqrt(2), new_x, new_y));
+                    que.put((cost + math.sqrt(2) / curr_tile.modify_speed(), new_x, new_y));
                     visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y);
             
             for x, y in tiles.Tile.adjacent:
@@ -167,7 +171,7 @@ class Space:
                     continue;
                 
                 if not visited[new_y * tiles.TILE_WIDTH + new_x]:
-                    que.put((cost + 1, new_x, new_y));
+                    que.put((cost + 1 / curr_tile.modify_speed(), new_x, new_y));
                     visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y);
             
             if found_path:

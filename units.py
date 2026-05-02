@@ -6,6 +6,7 @@ import tiles;
 class Unit:
     def __init__(self, speed, position, radius):
         self.speed = speed;
+        self.modified_speed = speed;
         self.position = position;
         self.radius = radius;
         self.task = queue.Queue();
@@ -38,6 +39,7 @@ class Miner(Unit):
             super().__init__(2, position, 5);
             
         self.inventory = resources.Resource();
+        self.full = 5;
         
     def set_interact(self, structure):
         self.task.put(commands.Interact(self, structure));
@@ -45,8 +47,14 @@ class Miner(Unit):
     def set_give_all(self, structure):
         self.task.put(commands.GiveAll(self, structure));
         
+    def set_take_resource(self, structure, resource):
+        self.task.put(commands.TakeResource(self, structure, resource));
+        
+    def set_give_resource(self, structure):
+        self.task.put(commands.GiveResource(self, structure));
+        
     def is_full(self):
-        return self.inventory.amount == 5;
+        return self.inventory.amount == self.full;
         
     def is_go_to_base(self):
         if self.is_busy():
@@ -61,5 +69,3 @@ class Miner(Unit):
         if tile.structure:
             return False;
         return True;
-    
-    # bantumlum

@@ -8,15 +8,33 @@ class Structure:
         self.current_health = max_health;
         self.is_destroyed = False;
         self.is_interactable = is_interactable;
+        self.is_occupied = False;
     
     def interact(self):
         pass;
+    
+    def draw(self, screen, position):
+        pass;
+    
+class ConstructRoad(Structure):
+    def __init__(self):
+        super().__init__(1);
+        self.inventory = [resources.Resource('wood', 1)];
+        
+    def check(self):
+        for resource in self.inventory:
+            if resource.amount != 0:
+                return False;
+        return True;
+        
+    def update(self, tile):
+        tile.type = 'road';
+        tile.structure = None;
     
 class Tree(Structure):
     def __init__(self):
         super().__init__(50);
         self.progress = 0;
-        self.is_occupied = False;
         
     def draw(self, screen, position):
         x = position[0] * tiles.TILE_SIZE + tiles.TILE_SIZE // 2;

@@ -33,8 +33,8 @@ class Move(Command):
         
         dir_x, dir_y = normalize((dest_x - self.unit.position[0], dest_y - self.unit.position[1]));
         
-        self.unit.position = (self.unit.position[0] + dir_x * self.unit.speed * SPEED_SCALAR * delta_time, 
-                              self.unit.position[1] + dir_y * self.unit.speed * SPEED_SCALAR * delta_time);
+        self.unit.position = (self.unit.position[0] + dir_x * self.unit.modified_speed * SPEED_SCALAR * delta_time, 
+                              self.unit.position[1] + dir_y * self.unit.modified_speed * SPEED_SCALAR * delta_time);
         
         mag = magnitude((dest_x - self.unit.position[0], 
                          dest_y - self.unit.position[1]));
@@ -68,3 +68,33 @@ class GiveAll(Command):
                 break;
         self.is_done = True;
         
+class TakeResource(Command):
+    def __init__(self, miner, structure, resource):
+        super().__init__(miner);
+        self.structure = structure;
+        self.resource = resource;
+        
+    def execute(self, delta_time):
+        type = self.resource.type;
+        amount = self.resource.amount;
+        
+        for resource in self.structure.inventory:
+            if resource.remove(type, amount):
+                self.unit.inventory.add(type, amount);
+                break;
+        self.is_done = True;
+        
+class GiveResource(Command):
+    def __init__(self, miner, structure):
+        super().__init__(miner);
+        self.structure = structure;
+        
+    def execute(self, delta_time):
+        for resource in self.structure.inventory:
+            type = resource.type;
+            amount = min(self.unit.inventory.amount, resource.amount);
+            if resource.remove(type, amount):
+                self.unit.inventory.remove(type, amount);
+                break;
+        self.is_done = True;
+        self.structure.is_occupied = False;
