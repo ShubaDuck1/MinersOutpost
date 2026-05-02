@@ -108,9 +108,9 @@ class Harvest(PlayerCommand):
         return True;
         
     def execute(self, space):
-        cnt = space.count_not_busy();
-        if not cnt:
-            return;
+        # cnt = space.count_not_busy();
+        # if not cnt:
+        #     return;
         
         if self.check(space):
             return;
@@ -234,9 +234,9 @@ class Build(PlayerCommand):
             self.is_done = True;
             return;
             
-        cnt = space.count_not_busy();
-        if not cnt:
-            return;
+        # cnt = space.count_not_busy();
+        # if not cnt:
+        #     return;
     
         if curr_task.is_occupied:
             return;
@@ -279,12 +279,15 @@ class PlayerAction:
         self.task.append(Build(position, curr_tile.structure));
         
     def update(self):
-        for i in range(len(self.task)):
-            curr_task = self.task[i];
-            curr_task.execute(self.space);
+        for curr_task in self.task:
+            cnt = self.space.count_not_busy();
+            if not cnt:
+                break;
             
-        for i in range(len(self.task)):
+            curr_task.execute(self.space);
             if curr_task.is_done:
-                self.task.pop(i);
+                self.task.remove(curr_task);
+                
+        print(len(self.task));
         
                 
