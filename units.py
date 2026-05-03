@@ -41,8 +41,8 @@ class Miner(Unit):
         self.inventory = resources.Resource();
         self.full = 5;
         
-    def set_interact(self, structure):
-        self.task.put(commands.Interact(self, structure));
+    def set_harvest(self, structure):
+        self.task.put(commands.Harvest(self, structure));
         
     def set_give_all(self, structure):
         self.task.put(commands.GiveAll(self, structure));
@@ -67,5 +67,21 @@ class Miner(Unit):
     
     def can_go_through(self, tile):
         if tile.structure and type(tile.structure) != structures.Spike:
+            return False;
+        return True;
+    
+class Enemy(Unit):
+    def __init__(self, position):
+        super().__init__(1, position, 5);
+        self.damage = 10;
+        
+    def set_attack_base(self, space, path):
+        for x, y in path:
+            self.task.put(commands.Attack(self, space.grid[y][x]));
+            self.task.put(commands.Move(self, (x, y)));
+        self.task.put(commands.Attack(self, space.grid[space.base_position[1]][space.base_position[0]]));
+        
+    def can_go_through(self, tile):
+        if tile.structure:
             return False;
         return True;

@@ -7,30 +7,45 @@ import structures;
 
 class Space:
     def __init__(self, grid, base_position):
-        self.space_miners = [];
         self.grid = grid;
+        self.space_miners = [];
+        self.space_enemies = [];
         
         self.base_position = base_position;
         self.base = structures.Base();
         self.grid[base_position[1]][base_position[0]].set_structure(self.base);
+        self.is_night = False;
     
-    def add(self, miner: units.Unit):
-        self.space_miners.append(miner);
+    def add(self, unit: units.Unit):
+        if type(unit) == units.Miner:
+            self.space_miners.append(unit);
+        elif type(unit) == units.Enemy:
+            self.space_enemies.append(unit);
         
     def step(self, delta_time):
-        for miner in self.space_miners:
-            miner.update(delta_time);
+        if not self.is_night:
+            for miner in self.space_miners:
+                miner.update(delta_time);
+        else:
+            for enemy in self.space_enemies:
+                enemy.update(delta_time);
         
     def update(self):
-        for miner in self.space_miners:
-            curr_x, curr_y = tiles.pixel_to_tile(miner.position);
-            curr_tile = self.grid[curr_y][curr_x];
-            miner.modified_speed = miner.speed * curr_tile.modify_speed();
-            
-            if miner.is_go_to_base():
-                path = self.find_path(miner, tiles.pixel_to_tile(miner.position), self.base_position);
-                miner.set_path(path);
-                miner.set_give_all(self.base);
+        if not self.is_night:
+            for miner in self.space_miners:
+                curr_x, curr_y = tiles.pixel_to_tile(miner.position);
+                curr_tile = self.grid[curr_y][curr_x];
+                miner.modified_speed = miner.speed * curr_tile.modify_speed();
+                
+                if miner.is_go_to_base():
+                    path = self.find_path(miner, tiles.pixel_to_tile(miner.position), self.base_position);
+                    miner.set_path(path);
+                    miner.set_give_all(self.base);
+        else:
+            for enemy in self.space_enemies:
+                curr_x, curr_y = tiles.pixel_to_tile(enemy.position);
+                curr_tile = self.grid[curr_y][curr_x];
+                enemy.modified_speed = enemy.speed * curr_tile.modify_speed();
             
         for y in range(len(self.grid)):
             for x in range(len(self.grid[y])):
@@ -114,7 +129,89 @@ class Space:
         
         path.reverse();
         return path;
+    
+    def find_path_enemy(self, enemy, position, destination):
+        curr_tile = self.grid[destination[1]][destination[0]];
+        if not curr_tile.structure.is_interactable:
+            return None;
+        
+        found_path = False;
+        visited = [None for _ in range(tiles.TILE_WIDTH * tiles.TILE_HEIGHT)];
+        path = [];
+        que = queue.PriorityQueue();
+        
+        curr_x, curr_y = position;
+        que.put((0, curr_x, curr_y))
+        visited[curr_y * tiles.TILE_WIDTH + curr_x] = (curr_x, curr_y);
+        
+        while not que.empty():
+            cost, curr_x, curr_y = que.get();
+            
+            for x, y in tiles.Tile.diagonal:
+                new_x = curr_x + x;
+                new_y = curr_y + y;
+                
+                if not (0 <= new_x < tiles.TILE_WIDTH):
+                    continue;
+                
+                if not (0 <= new_y < tiles.TILE_HEIGHT):
+                    continue;
+                
+                curr_tile = self.grid[new_y][new_x];
+                attack_cost = 0;
+                if not enemy.can_go_through(curr_tile):
+                    if not curr_tile.structure.is_attackable:
+                        continue;
+                    if curr_tile.structure:
+                        attack_cost = math.ceil(curr_tile.structure.current_health / enemy.damage);
+                
+                if not visited[new_y * tiles.TILE_WIDTH + new_x]:
+                    que.put((cost + attack_cost + math.sqrt(2) / curr_tile.modify_speed(), new_x, new_y));
+                    visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y);
+            
+            for x, y in tiles.Tile.adjacent:
+                new_x = curr_x + x;
+                new_y = curr_y + y;
+                
+                if not (0 <= new_x < tiles.TILE_WIDTH):
+                    continue;
+                
+                if not (0 <= new_y < tiles.TILE_HEIGHT):
+                    continue;
+                
+                if (new_x, new_y) == destination:
+                    found_path = True;
+                    break;
+                
+                curr_tile = self.grid[new_y][new_x];
+                attack_cost = 0;
+                if not enemy.can_go_through(curr_tile):
+                    if not curr_tile.structure.is_attackable:
+                        continue;
+                    if curr_tile.structure:
+                        attack_cost = math.ceil(curr_tile.structure.current_health / enemy.damage);
+                
+                if not visited[new_y * tiles.TILE_WIDTH + new_x]:
+                    que.put((cost + attack_cost + 1 / curr_tile.modify_speed(), new_x, new_y));
+                    visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y);
+            
+            if found_path:
+                break;
+        
+        if not found_path:
+            return None;
+        
+        path.append((curr_x, curr_y))
+        while not (curr_x, curr_y) == visited[curr_y * tiles.TILE_WIDTH + curr_x]:
+            curr_x, curr_y = visited[curr_y * tiles.TILE_WIDTH + curr_x];
+            path.append((curr_x, curr_y));
+        
+        path.reverse();
+        return path;
                 
     def draw_space(self, screen: pygame.Surface):
         for miner in self.space_miners:
             pygame.draw.circle(screen, pygame.Color('blue'), miner.position, miner.radius);
+            
+        for enemy in self.space_enemies:
+            pygame.draw.circle(screen, pygame.Color('red'), enemy.position, enemy.radius);

@@ -9,6 +9,7 @@ class Structure:
         self.is_destroyed = False;
         self.is_interactable = True;
         self.is_harvestable = False;
+        self.is_attackable = True;
         self.is_occupied = False;
     
     def interact(self, miner, delta_time):
@@ -51,6 +52,7 @@ class Tree(Structure):
         super().__init__(50);
         self.progress = 0;
         self.is_harvestable = True;
+        self.is_attackable = False;
         
     def draw(self, screen, position):
         x = position[0] * tiles.TILE_SIZE + tiles.TILE_SIZE // 2;
@@ -98,4 +100,4 @@ class Crossbow(Structure):
     def draw(self, screen, position):
         x = position[0] * tiles.TILE_SIZE + tiles.TILE_SIZE // 2;
         y = position[1] * tiles.TILE_SIZE + tiles.TILE_SIZE // 2;
-        pygame.draw.circle(screen, (193, 154, 107), (x, y), tiles.TILE_SIZE // 2);
+        pygame.draw.circle(screen, pygame.Color('red'), (x, y), tiles.TILE_SIZE // 2);

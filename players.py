@@ -119,14 +119,13 @@ class Harvest(PlayerCommand):
         
         if not tmp:
             self.is_done = True;
-            print(f'is_done');
             return;
             
         miner, path, dest_x, dest_y = tmp;
         curr_task = space.grid[dest_y][dest_x].structure;
         curr_task.is_occupied = True;
         miner.set_path(path);
-        miner.set_interact(curr_task);
+        miner.set_harvest(curr_task);
 
 class Build(PlayerCommand):
     def __init__(self, position, road):
@@ -278,6 +277,14 @@ class PlayerAction:
         curr_tile.structure = structures.Constructor(structures.Spike());
         self.task.append(Build(position, curr_tile.structure));
         
+    def add_crossbow(self, position):
+        curr_tile = self.space.grid[position[1]][position[0]];
+        if curr_tile.structure:
+            return;
+        
+        curr_tile.structure = structures.Constructor(structures.Crossbow());
+        self.task.append(Build(position, curr_tile.structure));
+        
     def update(self):
         for curr_task in self.task:
             cnt = self.space.count_not_busy();
@@ -287,7 +294,3 @@ class PlayerAction:
             curr_task.execute(self.space);
             if curr_task.is_done:
                 self.task.remove(curr_task);
-                
-        print(len(self.task));
-        
-                

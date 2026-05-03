@@ -42,7 +42,30 @@ class Move(Command):
         if mag <= 2:
             self.is_done = True;
             
-class Interact(Command):
+class Attack(Command):
+    def __init__(self, enemy, tile):
+        super().__init__(enemy);
+        self.tile = tile;
+        self.progress = 0;
+    
+    def check(self):
+        return self.unit.can_go_through(self.tile);
+    
+    def execute(self, delta_time):
+        if self.check():
+            self.is_done = True;
+            return;
+        
+        self.progress += delta_time;
+        if self.progress >= 1:
+            self.progress = 0;
+            self.tile.structure.current_health -= self.unit.damage;
+            
+            if self.tile.structure.current_health <= 0:
+                self.tile.structure.is_destroyed = True;
+            
+
+class Harvest(Command):
     def __init__(self, miner, structure):
         super().__init__(miner);
         self.structure = structure;
