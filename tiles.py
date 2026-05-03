@@ -58,8 +58,9 @@ def draw_tile(screen, grid):
     for y in range(len(grid)):
         for x in range(len(grid[y])):
             curr_tile = grid[y][x];
+            if curr_tile.is_foggy:
+                continue;
             g = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-            
             if curr_tile.type == 'grass':
                 color = pygame.Color('green');
             elif curr_tile.type == 'water':
@@ -68,13 +69,24 @@ def draw_tile(screen, grid):
                 color = pygame.Color('saddlebrown');
             
             pygame.draw.rect(screen, color, g);
+            
+def draw_fog(screen, grid):
+    for y in range(len(grid)):
+        for x in range(len(grid[y])):
+            curr_tile = grid[y][x];
+            
+            if not curr_tile.is_foggy:
+                continue;
+            
+            g = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            pygame.draw.rect(screen, pygame.Color('grey'), g);
 
 def draw_structure(screen, grid):
     for y in range(len(grid)):
         for x in range(len(grid[y])):
-            curr_structure = grid[y][x].structure;
-            if curr_structure:
-                curr_structure.draw(screen, (x, y));
+            curr_tile = grid[y][x];
+            if curr_tile.structure and not curr_tile.is_foggy:
+                curr_tile.structure.draw(screen, (x, y));
     
 def draw_hover(screen):
     x, y = pixel_to_tile(pygame.mouse.get_pos());

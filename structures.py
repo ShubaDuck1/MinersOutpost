@@ -74,6 +74,7 @@ class Base(Structure):
     def __init__(self):
         super().__init__(1000);
         self.inventory = [resources.Resource()];
+        self.vision_range = 10;
         
     def draw(self, screen, position):
         x = position[0] * tiles.TILE_SIZE + tiles.TILE_SIZE // 2;

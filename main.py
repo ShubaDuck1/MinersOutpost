@@ -48,6 +48,7 @@ def renderer():
     tiles.draw_hover(screen);
     space.draw_space(screen);
     tiles.draw_structure(screen, grid);
+    tiles.draw_fog(screen, grid);
     show_fps(screen);
     
     pygame.display.flip();

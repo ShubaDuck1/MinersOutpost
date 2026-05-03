@@ -37,7 +37,8 @@ class Miner(Unit):
             super().__init__(1, position, 5);
         elif type == 'horse':
             super().__init__(2, position, 5);
-            
+        
+        self.vision_range = 3;
         self.inventory = resources.Resource();
         self.full = 5;
         

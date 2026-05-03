@@ -15,6 +15,8 @@ class Space:
         self.base = structures.Base();
         self.grid[base_position[1]][base_position[0]].set_structure(self.base);
         self.is_night = False;
+        
+        self.check_fog_base();
     
     def add(self, unit: units.Unit):
         if type(unit) == units.Miner:
@@ -50,6 +52,8 @@ class Space:
         for y in range(len(self.grid)):
             for x in range(len(self.grid[y])):
                 self.grid[y][x].update();
+                
+        self.check_fog();
         
     def count_not_busy(self):
         cnt = 0;
@@ -59,6 +63,30 @@ class Space:
         
         return cnt;
     
+    def check_fog_base(self):
+        base_x, base_y = self.base_position;
+        
+        for x in range(base_x - self.base.vision_range, base_x + self.base.vision_range + 1):
+            for y in range(base_y - self.base.vision_range, base_y + self.base.vision_range + 1):
+                mag = math.hypot((x * tiles.TILE_SIZE + tiles.TILE_SIZE // 2) - (base_x * tiles.TILE_SIZE + tiles.TILE_SIZE // 2), 
+                                 (y * tiles.TILE_SIZE + tiles.TILE_SIZE // 2) - (base_y * tiles.TILE_SIZE + tiles.TILE_SIZE // 2));
+                
+                if mag <= self.base.vision_range * tiles.TILE_SIZE:
+                    self.grid[y][x].is_foggy = False;
+                    
+    def check_fog(self):
+        for miner in self.space_miners:
+            tmp_x, tmp_y = tiles.pixel_to_tile(miner.position);
+            curr_x, curr_y = miner.position;
+            
+            for x in range(tmp_x - miner.vision_range, tmp_x + miner.vision_range + 1):
+                for y in range(tmp_y - miner.vision_range, tmp_y + miner.vision_range + 1):
+                    mag = math.hypot((x * tiles.TILE_SIZE + tiles.TILE_SIZE // 2) - curr_x, 
+                                    (y * tiles.TILE_SIZE + tiles.TILE_SIZE // 2) - curr_y);
+                    
+                    if mag <= miner.vision_range * tiles.TILE_SIZE:
+                        self.grid[y][x].is_foggy = False;
+                        
     def find_path(self, miner, position, destination):
         curr_tile = self.grid[destination[1]][destination[0]];
         if not curr_tile.structure.is_interactable:

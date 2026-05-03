@@ -2,11 +2,11 @@ import tiles
 import math;
 
 def magnitude(vector):
-    return round(math.sqrt(vector[0] ** 2 + vector[1] ** 2), 1);
+    return math.hypot(vector[0], vector[1]);
             
 def normalize(vector: tuple[int, int]):
     mag = magnitude(vector);
-    if mag == 0:
+    if not mag:
         mag = 0.1;
     
     return round(vector[0] / mag, 1), round(vector[1] / mag, 1);
