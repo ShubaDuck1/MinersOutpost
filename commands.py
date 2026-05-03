@@ -28,8 +28,8 @@ class Move(Command):
         
     def execute(self, delta_time):
         dest_x, dest_y = self.destination;
-        dest_x = dest_x * tiles.TILE_SIZE + tiles.TILE_SIZE // 2;
-        dest_y = dest_y * tiles.TILE_SIZE + tiles.TILE_SIZE // 2;
+        dest_x = (dest_x + 0.5) * tiles.TILE_SIZE;
+        dest_y = (dest_y + 0.5) * tiles.TILE_SIZE;
         
         dir_x, dir_y = normalize((dest_x - self.unit.position[0], dest_y - self.unit.position[1]));
         

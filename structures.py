@@ -55,8 +55,8 @@ class Tree(Structure):
         self.is_attackable = False;
         
     def draw(self, screen, position):
-        x = position[0] * tiles.TILE_SIZE + tiles.TILE_SIZE // 2;
-        y = position[1] * tiles.TILE_SIZE + tiles.TILE_SIZE // 2;
+        x = (position[0] + 0.5) * tiles.TILE_SIZE;
+        y = (position[1] + 0.5) * tiles.TILE_SIZE;
         pygame.draw.circle(screen, pygame.Color('darkgreen'), (x, y), tiles.TILE_SIZE // 2);
         
     def interact(self, miner, delta_time):
@@ -77,8 +77,8 @@ class Base(Structure):
         self.vision_range = 10;
         
     def draw(self, screen, position):
-        x = position[0] * tiles.TILE_SIZE + tiles.TILE_SIZE // 2;
-        y = position[1] * tiles.TILE_SIZE + tiles.TILE_SIZE // 2;
+        x = (position[0] + 0.5) * tiles.TILE_SIZE;
+        y = (position[1] + 0.5) * tiles.TILE_SIZE;
         pygame.draw.circle(screen, pygame.Color('blue'), (x, y), tiles.TILE_SIZE // 2);
     
 class Spike(Structure):
@@ -88,8 +88,8 @@ class Spike(Structure):
         self.is_interactable = False;
         
     def draw(self, screen, position):
-        x = position[0] * tiles.TILE_SIZE + tiles.TILE_SIZE // 2;
-        y = position[1] * tiles.TILE_SIZE + tiles.TILE_SIZE // 2;
+        x = (position[0] + 0.5) * tiles.TILE_SIZE;
+        y = (position[1] + 0.5) * tiles.TILE_SIZE;
         pygame.draw.circle(screen, (193, 154, 107), (x, y), tiles.TILE_SIZE // 2);
         
 class Crossbow(Structure):
@@ -99,6 +99,6 @@ class Crossbow(Structure):
         self.is_interactable = False;
         
     def draw(self, screen, position):
-        x = position[0] * tiles.TILE_SIZE + tiles.TILE_SIZE // 2;
-        y = position[1] * tiles.TILE_SIZE + tiles.TILE_SIZE // 2;
+        x = (position[0] + 0.5) * tiles.TILE_SIZE;
+        y = (position[1] + 0.5) * tiles.TILE_SIZE;
         pygame.draw.circle(screen, pygame.Color('red'), (x, y), tiles.TILE_SIZE // 2);

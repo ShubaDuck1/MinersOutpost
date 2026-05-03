@@ -67,11 +67,17 @@ class Space:
         base_x, base_y = self.base_position;
         
         for x in range(base_x - self.base.vision_range, base_x + self.base.vision_range + 1):
-            for y in range(base_y - self.base.vision_range, base_y + self.base.vision_range + 1):
-                mag = math.hypot((x * tiles.TILE_SIZE + tiles.TILE_SIZE // 2) - (base_x * tiles.TILE_SIZE + tiles.TILE_SIZE // 2), 
-                                 (y * tiles.TILE_SIZE + tiles.TILE_SIZE // 2) - (base_y * tiles.TILE_SIZE + tiles.TILE_SIZE // 2));
+            if not 0 <= x < tiles.TILE_WIDTH:
+                continue;
                 
-                if mag <= self.base.vision_range * tiles.TILE_SIZE:
+            for y in range(base_y - self.base.vision_range, base_y + self.base.vision_range + 1):
+                if not 0 <= y < tiles.TILE_HEIGHT:
+                    continue;
+                    
+                mag = math.hypot((x + 0.5) * tiles.TILE_SIZE - (base_x + 0.5) * tiles.TILE_SIZE, 
+                                 (y + 0.5) * tiles.TILE_SIZE - (base_y + 0.5) * tiles.TILE_SIZE);
+                
+                if mag <= (self.base.vision_range + 0.5) * tiles.TILE_SIZE:
                     self.grid[y][x].is_foggy = False;
                     
     def check_fog(self):
@@ -80,11 +86,17 @@ class Space:
             curr_x, curr_y = miner.position;
             
             for x in range(tmp_x - miner.vision_range, tmp_x + miner.vision_range + 1):
+                if not 0 <= x < tiles.TILE_WIDTH:
+                    continue;
+                
                 for y in range(tmp_y - miner.vision_range, tmp_y + miner.vision_range + 1):
-                    mag = math.hypot((x * tiles.TILE_SIZE + tiles.TILE_SIZE // 2) - curr_x, 
-                                    (y * tiles.TILE_SIZE + tiles.TILE_SIZE // 2) - curr_y);
+                    if not 0 <= y < tiles.TILE_HEIGHT:
+                        continue;
                     
-                    if mag <= miner.vision_range * tiles.TILE_SIZE:
+                    mag = math.hypot((x + 0.5) * tiles.TILE_SIZE - curr_x, 
+                                    (y + 0.5) * tiles.TILE_SIZE - curr_y);
+                    
+                    if mag <= (miner.vision_range + 0.5) * tiles.TILE_SIZE:
                         self.grid[y][x].is_foggy = False;
                         
     def find_path(self, miner, position, destination):
