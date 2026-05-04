@@ -74,7 +74,15 @@ class Miner(Unit):
 class Enemy(Unit):
     def __init__(self, position):
         super().__init__(1, position, 5);
+        self.max_health = 30;
+        self.current_health = self.max_health;
         self.damage = 10;
+        self.is_destroyed = False;
+        
+    def take_damage(self, structure):
+        self.current_health -= structure.damage;
+        if self.current_health <= 0:
+            self.is_destroyed = True;
         
     def set_attack_base(self, space, path):
         for x, y in path:

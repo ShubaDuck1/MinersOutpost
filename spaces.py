@@ -45,6 +45,8 @@ class Space:
                     miner.set_give_all(self.base);
         else:
             for enemy in self.space_enemies:
+                if enemy.is_destroyed: 
+                    self.space_enemies.remove(enemy);
                 curr_x, curr_y = tiles.pixel_to_tile(enemy.position);
                 curr_tile = self.grid[curr_y][curr_x];
                 enemy.modified_speed = enemy.speed * curr_tile.modify_speed();
@@ -200,8 +202,6 @@ class Space:
                 curr_tile = self.grid[new_y][new_x];
                 attack_cost = 0;
                 if not enemy.can_go_through(curr_tile):
-                    if not curr_tile.structure.is_attackable:
-                        continue;
                     if curr_tile.structure:
                         attack_cost = math.ceil(curr_tile.structure.current_health / enemy.damage);
                 
@@ -226,8 +226,6 @@ class Space:
                 curr_tile = self.grid[new_y][new_x];
                 attack_cost = 0;
                 if not enemy.can_go_through(curr_tile):
-                    if not curr_tile.structure.is_attackable:
-                        continue;
                     if curr_tile.structure:
                         attack_cost = math.ceil(curr_tile.structure.current_health / enemy.damage);
                 

@@ -9,8 +9,13 @@ class Structure:
         self.is_destroyed = False;
         self.is_interactable = True;
         self.is_harvestable = False;
-        self.is_attackable = True;
+        self.is_attackable = False;
         self.is_occupied = False;
+        
+    def take_damage(self, enemy):
+        self.current_health -= enemy.damage;
+        if self.current_health <= 0:
+            self.is_destroyed = True;
     
     def interact(self, miner, delta_time):
         pass;
@@ -31,6 +36,10 @@ class Constructor(Structure):
             res.append(resources.Resource('wood', 1));
         elif type(self.structure) == Spike:
             res.append(resources.Resource('wood', 10));
+        elif type(self.structure) == Crossbow:
+            res.append(resources.Resource('wood', 10));
+            res.append(resources.Resource('stone', 5));
+            
         
         return res;
         
@@ -86,6 +95,11 @@ class Spike(Structure):
         super().__init__(200);
         self.is_harvestable = False;
         self.is_interactable = False;
+        self.damage = 5;
+        
+    def take_damage(self, enemy):
+        super().take_damage(enemy);
+        enemy.take_damage(self);
         
     def draw(self, screen, position):
         x = (position[0] + 0.5) * tiles.TILE_SIZE;
@@ -97,6 +111,8 @@ class Crossbow(Structure):
         super().__init__(50);
         self.is_harvestable = False;
         self.is_interactable = False;
+        self.vision_range = 5;
+        self.damage = 10;
         
     def draw(self, screen, position):
         x = (position[0] + 0.5) * tiles.TILE_SIZE;

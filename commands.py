@@ -59,11 +59,7 @@ class Attack(Command):
         self.progress += delta_time;
         if self.progress >= 1:
             self.progress = 0;
-            self.tile.structure.current_health -= self.unit.damage;
-            
-            if self.tile.structure.current_health <= 0:
-                self.tile.structure.is_destroyed = True;
-            
+            self.tile.structure.take_damage(self.unit);        
 
 class Harvest(Command):
     def __init__(self, miner, structure):
