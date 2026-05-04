@@ -38,7 +38,7 @@ class Constructor(Structure):
             res.append(resources.Resource('wood', 10));
         elif type(self.structure) == Crossbow:
             res.append(resources.Resource('wood', 10));
-            res.append(resources.Resource('stone', 5));
+            res.append(resources.Resource('stone', 10));
             
         
         return res;
@@ -75,6 +75,29 @@ class Tree(Structure):
             self.progress -= 1;
             self.current_health -= 1;
             miner.inventory.add('wood');
+        
+        if self.current_health <= 0:
+            self.is_destroyed = True;
+            
+class Stone(Structure):
+    def __init__(self):
+        super().__init__(50);
+        self.progress = 0;
+        self.is_harvestable = True;
+        self.is_attackable = False;
+        
+    def draw(self, screen, position):
+        x = (position[0] + 0.5) * tiles.TILE_SIZE;
+        y = (position[1] + 0.5) * tiles.TILE_SIZE;
+        pygame.draw.circle(screen, pygame.Color('grey'), (x, y), tiles.TILE_SIZE // 2);
+        
+    def interact(self, miner, delta_time):
+        self.progress += delta_time;
+        
+        if self.progress >= 1:
+            self.progress -= 1;
+            self.current_health -= 1;
+            miner.inventory.add('stone');
         
         if self.current_health <= 0:
             self.is_destroyed = True;
