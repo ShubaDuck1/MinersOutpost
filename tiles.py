@@ -1,9 +1,6 @@
 import pygame;
 import structures;
-
-TILE_SIZE = 16;
-TILE_WIDTH = 80;
-TILE_HEIGHT = 45;
+import settings;
 
 class Tile:
     valid_type = ['grass', 'road', 'water'];
@@ -26,12 +23,14 @@ class Tile:
         self._type = value;
         
     def modify_speed(self):
-        if self.type == 'grass':
+        if type(self.structure) == structures.Bridge:
+            return 1.5;
+        elif self.type == 'grass':
             return 1;
         elif self.type == 'road':
             return 1.5;
         elif self.type == 'water':
-            return 0.5;
+            return 0.25;
         
     def set_structure(self, structure):
         if self.structure:
@@ -52,7 +51,7 @@ class Tile:
             self.structure.update(self);
         
 def pixel_to_tile(position):
-    return int(position[0] // TILE_SIZE), int(position[1] // TILE_SIZE);
+    return int(position[0] // settings.TILE_SIZE), int(position[1] // settings.TILE_SIZE);
         
 def draw_tile(screen, grid):
     for y in range(len(grid)):
@@ -60,7 +59,7 @@ def draw_tile(screen, grid):
             curr_tile = grid[y][x];
             if curr_tile.is_foggy:
                 continue;
-            g = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            g = pygame.Rect(x * settings.TILE_SIZE, y * settings.TILE_SIZE, settings.TILE_SIZE, settings.TILE_SIZE);
             if curr_tile.type == 'grass':
                 color = pygame.Color('green');
             elif curr_tile.type == 'water':
@@ -78,7 +77,7 @@ def draw_fog(screen, grid):
             if not curr_tile.is_foggy:
                 continue;
             
-            g = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            g = pygame.Rect(x * settings.TILE_SIZE, y * settings.TILE_SIZE, settings.TILE_SIZE, settings.TILE_SIZE);
             pygame.draw.rect(screen, pygame.Color('grey'), g);
 
 def draw_structure(screen, grid):
@@ -90,5 +89,18 @@ def draw_structure(screen, grid):
     
 def draw_hover(screen):
     x, y = pixel_to_tile(pygame.mouse.get_pos());
-    g = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    g = pygame.Rect(x * settings.TILE_SIZE, y * settings.TILE_SIZE, settings.TILE_SIZE, settings.TILE_SIZE);
     pygame.draw.rect(screen, pygame.Color('white'), g, 2)
+    
+def draw_drag(screen, last_pos):
+    left, top = pixel_to_tile(last_pos);
+    right, bottom = pixel_to_tile(pygame.mouse.get_pos());
+    
+    if top > bottom:
+        top, bottom = bottom, top;
+    if left > right:
+        left, right = right, left;
+    
+    g = pygame.Rect(left * settings.TILE_SIZE, top * settings.TILE_SIZE, 
+                    (right - left + 1) * settings.TILE_SIZE, (bottom - top + 1) * settings.TILE_SIZE);
+    pygame.draw.rect(screen, pygame.Color('white'), g, 2);

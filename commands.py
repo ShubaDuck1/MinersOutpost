@@ -1,4 +1,4 @@
-import tiles
+import settings;
 import math;
 
 def magnitude(vector):
@@ -19,7 +19,7 @@ class Command:
     def execute(self):
         raise NotImplementedError("execute() Not Implemented");
     
-SPEED_SCALAR = tiles.TILE_SIZE * 2;
+SPEED_SCALAR = settings.TILE_SIZE * 2;
     
 class Move(Command):
     def __init__(self, unit, destination):
@@ -28,8 +28,8 @@ class Move(Command):
         
     def execute(self, delta_time):
         dest_x, dest_y = self.destination;
-        dest_x = (dest_x + 0.5) * tiles.TILE_SIZE;
-        dest_y = (dest_y + 0.5) * tiles.TILE_SIZE;
+        dest_x = (dest_x + 0.5) * settings.TILE_SIZE;
+        dest_y = (dest_y + 0.5) * settings.TILE_SIZE;
         
         dir_x, dir_y = normalize((dest_x - self.unit.position[0], dest_y - self.unit.position[1]));
         
@@ -111,7 +111,7 @@ class GiveResource(Command):
         
     def execute(self, delta_time):
         for resource in self.structure.inventory:
-            type = resource.type;
+            type = self.unit.inventory.type;
             amount = min(self.unit.inventory.amount, resource.amount);
             if resource.remove(type, amount):
                 self.unit.inventory.remove(type, amount);

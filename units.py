@@ -14,6 +14,12 @@ class Unit:
     def is_busy(self):
         return not self.task.empty();
     
+    def clear_task(self):
+        while not self.task.empty():
+            curr_task = self.task.get();
+            if type(curr_task) == commands.Harvest:
+                curr_task.structure.is_occupied = False;
+    
     def set_path(self, path):
         for destination in path:
             self.task.put(commands.Move(self, destination));
@@ -69,11 +75,18 @@ class Miner(Unit):
     
     def can_go_through(self, tile):
         if self.type == 'default':
-            if tile.structure and type(tile.structure) != structures.Spike:
-                return False;
-            return True;
+            if tile.structure and type(tile.structure) in (structures.Spike, structures.Bridge):
+                return True;
+            if not tile.structure:
+                return True;
+            return False;
+            
         elif self.type == 'horse':
-            return tile.type == 'road';
+            if tile.structure and type(tile.structure) == structures.Bridge:
+                return True;
+            if tile.type == 'road':
+                return True;
+            return False;
     
 class Enemy(Unit):
     def __init__(self, position):
@@ -95,6 +108,8 @@ class Enemy(Unit):
         self.task.put(commands.Attack(self, space.grid[space.base_position[1]][space.base_position[0]]));
         
     def can_go_through(self, tile):
-        if tile.structure:
-            return False;
-        return True;
+        if tile.structure and type(tile.structure) == structures.Bridge:
+            return True;
+        if not tile.structure:
+            return True;
+        return False;

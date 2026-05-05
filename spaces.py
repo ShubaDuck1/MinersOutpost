@@ -4,6 +4,8 @@ import tiles;
 import queue;
 import math;
 import structures;
+import settings;
+import random;
 
 class Space:
     def __init__(self, grid, base_position):
@@ -13,10 +15,11 @@ class Space:
         
         self.base_position = base_position;
         self.base = structures.Base();
-        self.grid[base_position[1]][base_position[0]].set_structure(self.base);
+        self.grid[base_position[1]][base_position[0]].structure = self.base;
+        self.day_counter = 0;
         self.is_night = False;
         
-        self.update_fog(((base_position[0] + 0.5) * tiles.TILE_SIZE, (base_position[1] + 0.5) * tiles.TILE_SIZE), self.base.vision_range);
+        self.update_fog(((base_position[0] + 0.5) * settings.TILE_SIZE, (base_position[1] + 0.5) * settings.TILE_SIZE), self.base.vision_range);
     
     def add(self, unit: units.Unit):
         if type(unit) == units.Miner:
@@ -38,7 +41,7 @@ class Space:
                     continue;
                 
                 if curr_structure.cooldown == 10:
-                    self.update_fog(((x + 0.5) * tiles.TILE_SIZE, (y + 0.5) * tiles.TILE_SIZE), self.grid[y][x].structure.vision_range);
+                    self.update_fog(((x + 0.5) * settings.TILE_SIZE, (y + 0.5) * settings.TILE_SIZE), self.grid[y][x].structure.vision_range);
                 
                 if not curr_structure.ready_to_attack(delta_time):
                     continue;
@@ -73,6 +76,9 @@ class Space:
         for y in range(len(self.grid)):
             for x in range(len(self.grid[y])):
                 self.grid[y][x].update();
+                
+        if not self.space_enemies and self.is_night:
+            self.set_day_time();
         
     def count_not_busy(self):
         cnt = 0;
@@ -82,6 +88,61 @@ class Space:
         
         return cnt;
     
+    def set_night_time(self):
+        self.is_night = True;
+        for miner in self.space_miners:
+            miner.clear_task();
+            path = self.find_path(miner, tiles.pixel_to_tile(miner.position), self.base_position);
+            miner.set_path(path);
+            miner.set_path([self.base_position]);
+            if miner.inventory.amount:
+                miner.set_give_all(self.base);
+        
+        enemy_amount = int(5 * pow(1.3, self.day_counter));
+        spawn_tile = [];
+        
+        visited = [False for _ in range(settings.TILE_WIDTH * settings.TILE_HEIGHT)];
+        que = queue.Queue();
+        
+        curr_x, curr_y = self.base_position;
+        que.put((curr_x, curr_y))
+        visited[curr_y * settings.TILE_WIDTH + curr_x] = True;
+        
+        while not que.empty():
+            curr_x, curr_y = que.get();
+            
+            for x, y in tiles.Tile.adjacent:
+                new_x = curr_x + x;
+                new_y = curr_y + y;
+                
+                if not (0 <= new_x < settings.TILE_WIDTH):
+                    continue;
+                
+                if not (0 <= new_y < settings.TILE_HEIGHT):
+                    continue;
+                
+                if self.grid[new_y][new_x].is_foggy:
+                    spawn_tile.append((new_x, new_y));
+                    continue;
+
+                if not visited[new_y * settings.TILE_WIDTH + new_x]:
+                    que.put((new_x, new_y));
+                    visited[new_y * settings.TILE_WIDTH + new_x] = True;
+        
+        while enemy_amount:
+            enemy_amount -= 1;
+            i = random.randint(0, len(spawn_tile) - 1);
+            x, y = spawn_tile[i];
+            
+            enemy = units.Enemy(((x + 0.5) * settings.TILE_SIZE, (y + 0.5) * settings.TILE_SIZE));
+            self.add(enemy);
+            path = self.find_path_enemy(enemy, (x, y), self.base_position);
+            enemy.set_attack_base(self, path);
+        
+    def set_day_time(self):
+        self.day_counter += 1;
+        self.is_night = False;
+    
     def find_enemy(self, position, _range):
         x, y = position;
         min_mag = math.inf;
@@ -89,10 +150,10 @@ class Space:
         
         for enemy in self.space_enemies:
             curr_x, curr_y = enemy.position;
-            mag = math.hypot((x + 0.5) * tiles.TILE_SIZE - curr_x, 
-                             (y + 0.5) * tiles.TILE_SIZE - curr_y);
+            mag = math.hypot((x + 0.5) * settings.TILE_SIZE - curr_x, 
+                             (y + 0.5) * settings.TILE_SIZE - curr_y);
             
-            if mag <= (_range + 0.5) * tiles.TILE_SIZE and mag < min_mag:
+            if mag <= (_range + 0.5) * settings.TILE_SIZE and mag < min_mag:
                 min_mag = mag;
                 res_enemy = enemy;
             
@@ -103,17 +164,17 @@ class Space:
         tmp_x, tmp_y = tiles.pixel_to_tile(position);
         
         for x in range(tmp_x - _range, tmp_x + _range + 1):
-            if not 0 <= x < tiles.TILE_WIDTH:
+            if not 0 <= x < settings.TILE_WIDTH:
                 continue;
             
             for y in range(tmp_y - _range, tmp_y + _range + 1):
-                if not 0 <= y < tiles.TILE_HEIGHT:
+                if not 0 <= y < settings.TILE_HEIGHT:
                     continue;
                 
-                mag = math.hypot((x + 0.5) * tiles.TILE_SIZE - curr_x, 
-                                (y + 0.5) * tiles.TILE_SIZE - curr_y);
+                mag = math.hypot((x + 0.5) * settings.TILE_SIZE - curr_x, 
+                                (y + 0.5) * settings.TILE_SIZE - curr_y);
                 
-                if mag <= (_range + 0.5) * tiles.TILE_SIZE:
+                if mag <= (_range + 0.5) * settings.TILE_SIZE:
                     self.grid[y][x].is_foggy = False;
                         
     def find_path(self, miner, position, destination):
@@ -122,13 +183,13 @@ class Space:
             return None;
         
         found_path = False;
-        visited = [None for _ in range(tiles.TILE_WIDTH * tiles.TILE_HEIGHT)];
+        visited = [None for _ in range(settings.TILE_WIDTH * settings.TILE_HEIGHT)];
         path = [];
         que = queue.PriorityQueue();
         
         curr_x, curr_y = position;
         que.put((0, curr_x, curr_y))
-        visited[curr_y * tiles.TILE_WIDTH + curr_x] = (curr_x, curr_y);
+        visited[curr_y * settings.TILE_WIDTH + curr_x] = (curr_x, curr_y);
         
         while not que.empty():
             cost, curr_x, curr_y= que.get();
@@ -137,28 +198,28 @@ class Space:
                 new_x = curr_x + x;
                 new_y = curr_y + y;
                 
-                if not (0 <= new_x < tiles.TILE_WIDTH):
+                if not (0 <= new_x < settings.TILE_WIDTH):
                     continue;
                 
-                if not (0 <= new_y < tiles.TILE_HEIGHT):
+                if not (0 <= new_y < settings.TILE_HEIGHT):
                     continue;
                 
                 curr_tile = self.grid[new_y][new_x];
                 if not miner.can_go_through(curr_tile):
                     continue;
                 
-                if not visited[new_y * tiles.TILE_WIDTH + new_x]:
+                if not visited[new_y * settings.TILE_WIDTH + new_x]:
                     que.put((cost + math.sqrt(2) / curr_tile.modify_speed(), new_x, new_y));
-                    visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y);
+                    visited[new_y * settings.TILE_WIDTH + new_x] = (curr_x, curr_y);
             
             for x, y in tiles.Tile.adjacent:
                 new_x = curr_x + x;
                 new_y = curr_y + y;
                 
-                if not (0 <= new_x < tiles.TILE_WIDTH):
+                if not (0 <= new_x < settings.TILE_WIDTH):
                     continue;
                 
-                if not (0 <= new_y < tiles.TILE_HEIGHT):
+                if not (0 <= new_y < settings.TILE_HEIGHT):
                     continue;
                 
                 if (new_x, new_y) == destination:
@@ -169,9 +230,9 @@ class Space:
                 if not miner.can_go_through(curr_tile):
                     continue;
                 
-                if not visited[new_y * tiles.TILE_WIDTH + new_x]:
+                if not visited[new_y * settings.TILE_WIDTH + new_x]:
                     que.put((cost + 1 / curr_tile.modify_speed(), new_x, new_y));
-                    visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y);
+                    visited[new_y * settings.TILE_WIDTH + new_x] = (curr_x, curr_y);
             
             if found_path:
                 break;
@@ -180,8 +241,8 @@ class Space:
             return None;
         
         path.append((curr_x, curr_y))
-        while not (curr_x, curr_y) == visited[curr_y * tiles.TILE_WIDTH + curr_x]:
-            curr_x, curr_y = visited[curr_y * tiles.TILE_WIDTH + curr_x];
+        while not (curr_x, curr_y) == visited[curr_y * settings.TILE_WIDTH + curr_x]:
+            curr_x, curr_y = visited[curr_y * settings.TILE_WIDTH + curr_x];
             path.append((curr_x, curr_y));
         
         path.reverse();
@@ -193,13 +254,13 @@ class Space:
             return None;
         
         found_path = False;
-        visited = [None for _ in range(tiles.TILE_WIDTH * tiles.TILE_HEIGHT)];
+        visited = [None for _ in range(settings.TILE_WIDTH * settings.TILE_HEIGHT)];
         path = [];
         que = queue.PriorityQueue();
         
         curr_x, curr_y = position;
         que.put((0, curr_x, curr_y))
-        visited[curr_y * tiles.TILE_WIDTH + curr_x] = (curr_x, curr_y);
+        visited[curr_y * settings.TILE_WIDTH + curr_x] = (curr_x, curr_y);
         
         while not que.empty():
             cost, curr_x, curr_y = que.get();
@@ -208,10 +269,10 @@ class Space:
                 new_x = curr_x + x;
                 new_y = curr_y + y;
                 
-                if not (0 <= new_x < tiles.TILE_WIDTH):
+                if not (0 <= new_x < settings.TILE_WIDTH):
                     continue;
                 
-                if not (0 <= new_y < tiles.TILE_HEIGHT):
+                if not (0 <= new_y < settings.TILE_HEIGHT):
                     continue;
                 
                 curr_tile = self.grid[new_y][new_x];
@@ -220,18 +281,18 @@ class Space:
                     if curr_tile.structure:
                         attack_cost = math.ceil(curr_tile.structure.current_health / enemy.damage);
                 
-                if not visited[new_y * tiles.TILE_WIDTH + new_x]:
+                if not visited[new_y * settings.TILE_WIDTH + new_x]:
                     que.put((cost + attack_cost + math.sqrt(2) / curr_tile.modify_speed(), new_x, new_y));
-                    visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y);
+                    visited[new_y * settings.TILE_WIDTH + new_x] = (curr_x, curr_y);
             
             for x, y in tiles.Tile.adjacent:
                 new_x = curr_x + x;
                 new_y = curr_y + y;
                 
-                if not (0 <= new_x < tiles.TILE_WIDTH):
+                if not (0 <= new_x < settings.TILE_WIDTH):
                     continue;
                 
-                if not (0 <= new_y < tiles.TILE_HEIGHT):
+                if not (0 <= new_y < settings.TILE_HEIGHT):
                     continue;
                 
                 if (new_x, new_y) == destination:
@@ -244,9 +305,9 @@ class Space:
                     if curr_tile.structure:
                         attack_cost = math.ceil(curr_tile.structure.current_health / enemy.damage);
                 
-                if not visited[new_y * tiles.TILE_WIDTH + new_x]:
+                if not visited[new_y * settings.TILE_WIDTH + new_x]:
                     que.put((cost + attack_cost + 1 / curr_tile.modify_speed(), new_x, new_y));
-                    visited[new_y * tiles.TILE_WIDTH + new_x] = (curr_x, curr_y);
+                    visited[new_y * settings.TILE_WIDTH + new_x] = (curr_x, curr_y);
             
             if found_path:
                 break;
@@ -255,8 +316,8 @@ class Space:
             return None;
         
         path.append((curr_x, curr_y))
-        while not (curr_x, curr_y) == visited[curr_y * tiles.TILE_WIDTH + curr_x]:
-            curr_x, curr_y = visited[curr_y * tiles.TILE_WIDTH + curr_x];
+        while not (curr_x, curr_y) == visited[curr_y * settings.TILE_WIDTH + curr_x]:
+            curr_x, curr_y = visited[curr_y * settings.TILE_WIDTH + curr_x];
             path.append((curr_x, curr_y));
         
         path.reverse();
@@ -268,3 +329,13 @@ class Space:
             
         for enemy in self.space_enemies:
             pygame.draw.circle(screen, pygame.Color('red'), enemy.position, enemy.radius);
+            
+        if self.is_night:
+            self.draw_night(screen);
+        
+    def draw_night(self, screen):
+        temp_surface = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA);
+        g = g = pygame.Rect(0, 0, settings.WIDTH, settings.HEIGHT);
+        pygame.draw.rect(temp_surface, (0, 0, 0, 100), g);
+        screen.blit(temp_surface, (0, 0));
+            

@@ -1,5 +1,5 @@
 import pygame;
-import tiles;
+import settings;
 import resources;
 
 class Structure:
@@ -17,6 +17,9 @@ class Structure:
         if self.current_health <= 0:
             self.is_destroyed = True;
             
+    def can_build(self, tile):
+        pass;
+            
     def update(self, delta_time):
         pass;
     
@@ -28,16 +31,17 @@ class Constructor(Structure):
         super().__init__(1);
         self.structure = structure;
         self.inventory = self.set_inventory();
+        self.is_interactable = True;
         
     def set_inventory(self):
         res = [];
         
         if self.structure == 'road':
-            res.append(resources.Resource('wood', 1));
+            res.append(resources.Resource('stone', 1));
         elif type(self.structure) == Spike:
             res.append(resources.Resource('wood', 10));
         elif type(self.structure) == Crossbow:
-            res.append(resources.Resource('wood', 10));
+            res.append(resources.Resource('wood', 20));
             res.append(resources.Resource('stone', 10));
         
         return res;
@@ -56,9 +60,9 @@ class Constructor(Structure):
             tile.structure = self.structure;
             
     def draw(self, screen, position):
-        x = (position[0] + 0.5) * tiles.TILE_SIZE;
-        y = (position[1] + 0.5) * tiles.TILE_SIZE;
-        pygame.draw.circle(screen, pygame.Color('orange'), (x, y), tiles.TILE_SIZE // 2);
+        x, y = position;
+        g = pygame.Rect(x * settings.TILE_SIZE + 1, y * settings.TILE_SIZE + 1, settings.TILE_SIZE - 2, settings.TILE_SIZE - 2);
+        pygame.draw.rect(screen, pygame.Color('orange'), g)
     
 class Tree(Structure):
     def __init__(self):
@@ -67,9 +71,9 @@ class Tree(Structure):
         self.is_harvestable = True;
         
     def draw(self, screen, position):
-        x = (position[0] + 0.5) * tiles.TILE_SIZE;
-        y = (position[1] + 0.5) * tiles.TILE_SIZE;
-        pygame.draw.circle(screen, pygame.Color('darkgreen'), (x, y), tiles.TILE_SIZE // 2);
+        x = (position[0] + 0.5) * settings.TILE_SIZE;
+        y = (position[1] + 0.5) * settings.TILE_SIZE;
+        pygame.draw.circle(screen, pygame.Color('darkgreen'), (x, y), settings.TILE_SIZE // 2);
         
     def harvest(self, miner, delta_time):
         self.progress += delta_time;
@@ -89,9 +93,9 @@ class Stone(Structure):
         self.is_harvestable = True;
         
     def draw(self, screen, position):
-        x = (position[0] + 0.5) * tiles.TILE_SIZE;
-        y = (position[1] + 0.5) * tiles.TILE_SIZE;
-        pygame.draw.circle(screen, pygame.Color('grey'), (x, y), tiles.TILE_SIZE // 2);
+        x = (position[0] + 0.5) * settings.TILE_SIZE;
+        y = (position[1] + 0.5) * settings.TILE_SIZE;
+        pygame.draw.circle(screen, pygame.Color('grey'), (x, y), settings.TILE_SIZE // 2);
         
     def harvest(self, miner, delta_time):
         self.progress += delta_time;
@@ -107,14 +111,24 @@ class Stone(Structure):
 class Base(Structure):
     def __init__(self):
         super().__init__(1000);
-        self.inventory = [resources.Resource()];
+        self.inventory = [resources.Resource() for _ in range(5)];
         self.vision_range = 10;
         self.is_interactable = True;
         
     def draw(self, screen, position):
-        x = (position[0] + 0.5) * tiles.TILE_SIZE;
-        y = (position[1] + 0.5) * tiles.TILE_SIZE;
-        pygame.draw.circle(screen, pygame.Color('blue'), (x, y), tiles.TILE_SIZE // 2);
+        x = (position[0] + 0.5) * settings.TILE_SIZE;
+        y = (position[1] + 0.5) * settings.TILE_SIZE;
+        pygame.draw.circle(screen, pygame.Color('blue'), (x, y), settings.TILE_SIZE // 2);
+        
+class Bridge(Structure):
+    def __init__(self):
+        super().__init__(10);
+        
+    def draw(self, screen, position):
+        x = position[0];
+        y = position[1];
+        g = pygame.Rect(x * settings.TILE_SIZE, y * settings.TILE_SIZE, settings.TILE_SIZE, settings.TILE_SIZE);
+        pygame.draw.rect(screen, pygame.Color('darkgrey'), g);
     
 class Spike(Structure):
     def __init__(self):
@@ -125,10 +139,17 @@ class Spike(Structure):
         super().take_damage(enemy);
         enemy.take_damage(self);
         
+    def can_build(self, tile):
+        if tile.type == 'water':
+            return False;
+        if tile.structure:
+            return False;
+        return True;
+        
     def draw(self, screen, position):
-        x = (position[0] + 0.5) * tiles.TILE_SIZE;
-        y = (position[1] + 0.5) * tiles.TILE_SIZE;
-        pygame.draw.circle(screen, (193, 154, 107), (x, y), tiles.TILE_SIZE // 2);
+        x, y = position;
+        g = pygame.Rect(x * settings.TILE_SIZE + 1, y * settings.TILE_SIZE + 1, settings.TILE_SIZE - 2, settings.TILE_SIZE - 2);
+        pygame.draw.rect(screen, pygame.Color('brown'), g)
         
 class Crossbow(Structure):
     def __init__(self):
@@ -138,10 +159,16 @@ class Crossbow(Structure):
         self.vision_range = 6;
         self.damage = 20;
         
+    def can_build(self, tile):
+        if tile.structure:
+            return False;
+        if not tile.type == 'grass':
+            return False;
+        return True;
+        
     def attack(self, enemy):
         self.cooldown = 0;
         enemy.take_damage(self);
-        print(enemy.is_destroyed);
         
     def ready_to_attack(self, delta_time):
         self.cooldown += delta_time;
@@ -149,6 +176,11 @@ class Crossbow(Structure):
         return self.cooldown >= 1;
         
     def draw(self, screen, position):
-        x = (position[0] + 0.5) * tiles.TILE_SIZE;
-        y = (position[1] + 0.5) * tiles.TILE_SIZE;
-        pygame.draw.circle(screen, pygame.Color('purple'), (x, y), tiles.TILE_SIZE // 2);
+        radius = (self.vision_range + 0.5) * settings.TILE_SIZE;
+        temp_surface = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+        
+        x = (position[0] + 0.5) * settings.TILE_SIZE;
+        y = (position[1] + 0.5) * settings.TILE_SIZE;
+        pygame.draw.circle(screen, pygame.Color('purple'), (x, y), settings.TILE_SIZE // 2);
+        pygame.draw.circle(temp_surface, (255, 0, 0, 50), (radius, radius), radius);
+        screen.blit(temp_surface, (x - radius, y - radius))
