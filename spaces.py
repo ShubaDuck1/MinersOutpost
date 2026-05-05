@@ -62,6 +62,8 @@ class Space:
             
             if miner.is_go_to_base():
                 path = self.find_path(miner, tiles.pixel_to_tile(miner.position), self.base_position);
+                if not path:
+                    return;
                 miner.set_path(path);
                 miner.set_give_all(self.base);    
                 
@@ -128,6 +130,9 @@ class Space:
                 if not visited[new_y * settings.TILE_WIDTH + new_x]:
                     que.put((new_x, new_y));
                     visited[new_y * settings.TILE_WIDTH + new_x] = True;
+                    
+        if not spawn_tile:
+            return;
         
         while enemy_amount:
             enemy_amount -= 1;

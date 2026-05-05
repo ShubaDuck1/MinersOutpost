@@ -17,7 +17,7 @@ class Unit:
     def clear_task(self):
         while not self.task.empty():
             curr_task = self.task.get();
-            if type(curr_task) == commands.Harvest:
+            if type(curr_task) in (commands.Harvest, commands.GiveResource):
                 curr_task.structure.is_occupied = False;
     
     def set_path(self, path):

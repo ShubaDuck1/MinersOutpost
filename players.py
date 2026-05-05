@@ -244,7 +244,11 @@ class Build(PlayerCommand):
         if not amount:
             return;
         
-        miner, path = self.find_path(space, space.base_position);
+        tmp = self.find_path(space, space.base_position);
+        if not tmp:
+            return;
+        
+        miner, path = tmp;
         amount = min(amount, miner.full);
         miner.set_path(path);
         miner.set_take_resource(space.base, type, amount);
@@ -263,11 +267,13 @@ class Explore(PlayerCommand):
 
 class PlayerAction:
     def __init__(self, space):
-        self.task = [];
+        self.task = queue.PriorityQueue();
         self.space = space;
+        self.counter = 0;
     
     def add_harvest(self, top, left, bottom, right):
-        self.task.append(Harvest(top, left, bottom, right));
+        self.task.put((2, self.counter, Harvest(top, left, bottom, right)));
+        self.counter += 1;
         
     def add_road(self, position):
         curr_tile = self.space.grid[position[1]][position[0]];
@@ -275,7 +281,8 @@ class PlayerAction:
             return;
         
         curr_tile.set_structure(structures.Constructor('road'));
-        self.task.append(Build(position, curr_tile.structure));
+        self.task.put((1, self.counter, Build(position, curr_tile.structure)));
+        self.counter += 1;
         
     def add_spike(self, position):
         curr_tile = self.space.grid[position[1]][position[0]];
@@ -284,7 +291,8 @@ class PlayerAction:
             return;
         
         curr_tile.set_structure(structures.Constructor(struc));
-        self.task.append(Build(position, curr_tile.structure));
+        self.task.put((1, self.counter, Build(position, curr_tile.structure)));
+        self.counter += 1;
         
     def add_crossbow(self, position):
         curr_tile = self.space.grid[position[1]][position[0]];
@@ -293,14 +301,30 @@ class PlayerAction:
             return;
         
         curr_tile.set_structure(structures.Constructor(struc));
-        self.task.append(Build(position, curr_tile.structure));
+        self.task.put((1, self.counter, Build(position, curr_tile.structure)));
+        self.counter += 1;
         
     def update(self):
-        for curr_task in self.task:
+        tmp = [];
+        while not self.task.empty():
             cnt = self.space.count_not_busy();
             if not cnt:
                 break;
             
+            prio, counter, curr_task = self.task.get();
+            
             curr_task.execute(self.space);
-            if curr_task.is_done:
-                self.task.remove(curr_task);
+            if not curr_task.is_done:
+                tmp.append((prio, counter, curr_task));
+        
+        for x in tmp:
+            self.task.put(x);
+                
+        # for curr_task in self.task:
+        #     cnt = self.space.count_not_busy();
+        #     if not cnt:
+        #         break;
+            
+        #     curr_task.execute(self.space);
+        #     if curr_task.is_done:
+        #         self.task.remove(curr_task);

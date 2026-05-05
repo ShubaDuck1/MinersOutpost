@@ -12,7 +12,7 @@ screen = pygame.display.set_mode((settings.WIDTH, settings.HEIGHT));
 clock = pygame.Clock();
 
 time_left = settings.DAY_TIME;
-fast_forward = 3;
+fast_forward = 6;
 gen = load.Generator(69696969);
 grid = gen.grid;
 space = spaces.Space(grid, gen.base_position);
@@ -72,8 +72,12 @@ def show_text(screen):
     fps_text = font.render(f"FPS: {clock.get_fps():.2f}", True, pygame.Color("white"));
     screen.blit(fps_text, (5, 5));
     
-    mode_text = font.render(f"Day {space.day_counter}, time left: {int(time_left // 60):02d}:{int(time_left % 60):02d}", True, pygame.Color("white"));
-    screen.blit(mode_text, (5, 25));
+    if space.is_night:
+        mode_text = font.render(f"Night {space.day_counter}", True, pygame.Color("white"));
+        screen.blit(mode_text, (5, 25));
+    else:
+        mode_text = font.render(f"Day {space.day_counter}, time left: {int(time_left // 60):02d}:{int(time_left % 60):02d}", True, pygame.Color("white"));
+        screen.blit(mode_text, (5, 25));
     
     mode_text = font.render(f"Current mode: {current_mode}", True, pygame.Color("white"));
     screen.blit(mode_text, (5, 45));
@@ -104,7 +108,7 @@ def renderer():
 def run(screen):
     global time_left;
     
-    for i in range(5):
+    for i in range(20):
         miner = units.Miner('default', ((space.base_position[0] + 0.5) * settings.TILE_SIZE, (space.base_position[1] + 0.5) * settings.TILE_SIZE));
         space.add(miner);
     
@@ -112,13 +116,15 @@ def run(screen):
         event_handler();
         
         delta_time = clock.tick(settings.FPS) / 1000;
-        time_left -= delta_time * fast_forward;
         
         if time_left <= 0:
             time_left = settings.DAY_TIME;
             space.set_night_time();
+        
         if not space.is_night:
             player_action.update();
+            time_left -= delta_time * fast_forward;
+            
         space.step(delta_time * fast_forward);
         space.update();
         renderer();
