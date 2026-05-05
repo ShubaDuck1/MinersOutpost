@@ -19,9 +19,6 @@ class Structure:
             
     def can_build(self, tile):
         pass;
-            
-    def update(self, delta_time):
-        pass;
     
     def draw(self, screen, position):
         pass;
@@ -42,6 +39,9 @@ class Constructor(Structure):
             res.append(resources.Resource('wood', 10));
         elif type(self.structure) == Crossbow:
             res.append(resources.Resource('wood', 20));
+            res.append(resources.Resource('stone', 10));
+        elif type(self.structure) == Bridge:
+            res.append(resources.Resource('wood', 10));
             res.append(resources.Resource('stone', 10));
         
         return res;
@@ -123,6 +123,11 @@ class Base(Structure):
 class Bridge(Structure):
     def __init__(self):
         super().__init__(10);
+        
+    def can_build(self, tile):
+        if tile.type == 'water':
+            return True;
+        return False;
         
     def draw(self, screen, position):
         x = position[0];

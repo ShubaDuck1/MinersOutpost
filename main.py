@@ -12,7 +12,7 @@ screen = pygame.display.set_mode((settings.WIDTH, settings.HEIGHT));
 clock = pygame.Clock();
 
 time_left = settings.DAY_TIME;
-fast_forward = 3;
+fast_forward = 6;
 gen = load.Generator(69696969);
 grid = gen.grid;
 space = spaces.Space(grid, gen.base_position);
@@ -38,8 +38,10 @@ def event_handler():
         elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_2:
             current_mode = 'build road';
         elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_3:
-            current_mode = 'build spike';
+            current_mode = 'build bridge';
         elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_4:
+            current_mode = 'build spike';
+        elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_5:
             current_mode = 'build crossbow';
 
     if current_mode == 'select':
@@ -57,6 +59,10 @@ def event_handler():
         if pygame.mouse.get_pressed()[0]:
             player_action.add_road(tiles.pixel_to_tile(pygame.mouse.get_pos()));
             
+    if current_mode == 'build bridge':
+        if pygame.mouse.get_pressed()[0]:
+            player_action.add_bridge(tiles.pixel_to_tile(pygame.mouse.get_pos()));
+            
     if current_mode == 'build spike':
         if pygame.mouse.get_pressed()[0]:
             player_action.add_spike(tiles.pixel_to_tile(pygame.mouse.get_pos()));
@@ -72,8 +78,12 @@ def show_text(screen):
     fps_text = font.render(f"FPS: {clock.get_fps():.2f}", True, pygame.Color("white"));
     screen.blit(fps_text, (5, 5));
     
-    mode_text = font.render(f"Day {space.day_counter}, time left: {int(time_left // 60):02d}:{int(time_left % 60):02d}", True, pygame.Color("white"));
-    screen.blit(mode_text, (5, 25));
+    if space.is_night:
+        mode_text = font.render(f"Night {space.day_counter}", True, pygame.Color("white"));
+        screen.blit(mode_text, (5, 25));
+    else:
+        mode_text = font.render(f"Day {space.day_counter}, time left: {int(time_left // 60):02d}:{int(time_left % 60):02d}", True, pygame.Color("white"));
+        screen.blit(mode_text, (5, 25));
     
     mode_text = font.render(f"Current mode: {current_mode}", True, pygame.Color("white"));
     screen.blit(mode_text, (5, 45));
@@ -87,8 +97,8 @@ def show_text(screen):
         
 def renderer():
     tiles.draw_tile(screen, grid);
-    space.draw_space(screen);
     tiles.draw_structure(screen, grid);
+    space.draw_space(screen);
     tiles.draw_fog(screen, grid);
     
     if drag_pos:
@@ -104,7 +114,7 @@ def renderer():
 def run(screen):
     global time_left;
     
-    for i in range(5):
+    for i in range(20):
         miner = units.Miner('default', ((space.base_position[0] + 0.5) * settings.TILE_SIZE, (space.base_position[1] + 0.5) * settings.TILE_SIZE));
         space.add(miner);
     
@@ -112,13 +122,15 @@ def run(screen):
         event_handler();
         
         delta_time = clock.tick(settings.FPS) / 1000;
-        time_left -= delta_time * fast_forward;
         
         if time_left <= 0:
             time_left = settings.DAY_TIME;
             space.set_night_time();
+        
         if not space.is_night:
             player_action.update();
+            time_left -= delta_time * fast_forward;
+            
         space.step(delta_time * fast_forward);
         space.update();
         renderer();

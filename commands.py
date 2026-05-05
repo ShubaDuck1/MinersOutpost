@@ -46,7 +46,7 @@ class Attack(Command):
     def __init__(self, enemy, tile):
         super().__init__(enemy);
         self.tile = tile;
-        self.progress = 0;
+        self.progress = 10;
     
     def check(self):
         return self.unit.can_go_through(self.tile);
