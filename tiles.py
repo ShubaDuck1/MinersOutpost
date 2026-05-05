@@ -48,7 +48,7 @@ class Tile:
         if self.structure.is_destroyed:
             self.remove_structure();
             
-        if type(self.structure) == structures.Constructor  and self.structure.check():
+        if type(self.structure) == structures.Constructor and self.structure.check():
             self.structure.update(self);
         
 def pixel_to_tile(position):

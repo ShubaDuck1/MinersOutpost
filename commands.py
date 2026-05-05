@@ -67,7 +67,7 @@ class Harvest(Command):
         self.structure = structure;
         
     def execute(self, delta_time):
-        self.structure.interact(self.unit, delta_time);
+        self.structure.harvest(self.unit, delta_time);
         
         if self.structure.is_destroyed or self.unit.is_full():
             self.is_done = True;

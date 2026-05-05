@@ -253,6 +253,10 @@ class Build(PlayerCommand):
         miner.set_path(path);
         miner.set_give_resource(curr_task);
         curr_task.is_occupied = True;
+        
+class Explore(PlayerCommand):
+    def execute(self):
+        return super().execute()
 
 class PlayerAction:
     def __init__(self, space):

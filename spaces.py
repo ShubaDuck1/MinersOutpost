@@ -16,7 +16,7 @@ class Space:
         self.grid[base_position[1]][base_position[0]].set_structure(self.base);
         self.is_night = False;
         
-        self.check_fog_base();
+        self.update_fog(((base_position[0] + 0.5) * tiles.TILE_SIZE, (base_position[1] + 0.5) * tiles.TILE_SIZE), self.base.vision_range);
     
     def add(self, unit: units.Unit):
         if type(unit) == units.Miner:
@@ -30,20 +30,42 @@ class Space:
 
         for enemy in self.space_enemies:
             enemy.update(delta_time);
+            
+        for y in range(len(self.grid)):
+            for x in range(len(self.grid[y])):
+                curr_structure = self.grid[y][x].structure;
+                if not curr_structure or not curr_structure.is_attackable:
+                    continue;
+                
+                if curr_structure.cooldown == 10:
+                    self.update_fog(((x + 0.5) * tiles.TILE_SIZE, (y + 0.5) * tiles.TILE_SIZE), self.grid[y][x].structure.vision_range);
+                
+                if not curr_structure.ready_to_attack(delta_time):
+                    continue;
+                
+                enemy = self.find_enemy((x, y), curr_structure.vision_range);
+                
+                if not enemy:
+                    continue;
+                
+                curr_structure.attack(enemy);
         
     def update(self):
         for miner in self.space_miners:
             curr_x, curr_y = tiles.pixel_to_tile(miner.position);
             curr_tile = self.grid[curr_y][curr_x];
             miner.modified_speed = miner.speed * curr_tile.modify_speed();
+            self.update_fog(miner.position, miner.vision_range);
             
             if miner.is_go_to_base():
                 path = self.find_path(miner, tiles.pixel_to_tile(miner.position), self.base_position);
                 miner.set_path(path);
-                miner.set_give_all(self.base);
+                miner.set_give_all(self.base);    
+                
         for enemy in self.space_enemies:
             if enemy.is_destroyed: 
                 self.space_enemies.remove(enemy);
+                continue;
             curr_x, curr_y = tiles.pixel_to_tile(enemy.position);
             curr_tile = self.grid[curr_y][curr_x];
             enemy.modified_speed = enemy.speed * curr_tile.modify_speed();
@@ -51,8 +73,6 @@ class Space:
         for y in range(len(self.grid)):
             for x in range(len(self.grid[y])):
                 self.grid[y][x].update();
-                
-        self.check_fog();
         
     def count_not_busy(self):
         cnt = 0;
@@ -62,41 +82,39 @@ class Space:
         
         return cnt;
     
-    def check_fog_base(self):
-        base_x, base_y = self.base_position;
+    def find_enemy(self, position, _range):
+        x, y = position;
+        min_mag = math.inf;
+        res_enemy = None;
         
-        for x in range(base_x - self.base.vision_range, base_x + self.base.vision_range + 1):
+        for enemy in self.space_enemies:
+            curr_x, curr_y = enemy.position;
+            mag = math.hypot((x + 0.5) * tiles.TILE_SIZE - curr_x, 
+                             (y + 0.5) * tiles.TILE_SIZE - curr_y);
+            
+            if mag <= (_range + 0.5) * tiles.TILE_SIZE and mag < min_mag:
+                min_mag = mag;
+                res_enemy = enemy;
+            
+            return res_enemy;
+    
+    def update_fog(self, position, _range):
+        curr_x, curr_y = position;
+        tmp_x, tmp_y = tiles.pixel_to_tile(position);
+        
+        for x in range(tmp_x - _range, tmp_x + _range + 1):
             if not 0 <= x < tiles.TILE_WIDTH:
                 continue;
-                
-            for y in range(base_y - self.base.vision_range, base_y + self.base.vision_range + 1):
+            
+            for y in range(tmp_y - _range, tmp_y + _range + 1):
                 if not 0 <= y < tiles.TILE_HEIGHT:
                     continue;
-                    
-                mag = math.hypot((x + 0.5) * tiles.TILE_SIZE - (base_x + 0.5) * tiles.TILE_SIZE, 
-                                 (y + 0.5) * tiles.TILE_SIZE - (base_y + 0.5) * tiles.TILE_SIZE);
                 
-                if mag <= (self.base.vision_range + 0.5) * tiles.TILE_SIZE:
+                mag = math.hypot((x + 0.5) * tiles.TILE_SIZE - curr_x, 
+                                (y + 0.5) * tiles.TILE_SIZE - curr_y);
+                
+                if mag <= (_range + 0.5) * tiles.TILE_SIZE:
                     self.grid[y][x].is_foggy = False;
-                    
-    def check_fog(self):
-        for miner in self.space_miners:
-            tmp_x, tmp_y = tiles.pixel_to_tile(miner.position);
-            curr_x, curr_y = miner.position;
-            
-            for x in range(tmp_x - miner.vision_range, tmp_x + miner.vision_range + 1):
-                if not 0 <= x < tiles.TILE_WIDTH:
-                    continue;
-                
-                for y in range(tmp_y - miner.vision_range, tmp_y + miner.vision_range + 1):
-                    if not 0 <= y < tiles.TILE_HEIGHT:
-                        continue;
-                    
-                    mag = math.hypot((x + 0.5) * tiles.TILE_SIZE - curr_x, 
-                                    (y + 0.5) * tiles.TILE_SIZE - curr_y);
-                    
-                    if mag <= (miner.vision_range + 0.5) * tiles.TILE_SIZE:
-                        self.grid[y][x].is_foggy = False;
                         
     def find_path(self, miner, position, destination):
         curr_tile = self.grid[destination[1]][destination[0]];

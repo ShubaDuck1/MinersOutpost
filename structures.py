@@ -7,7 +7,7 @@ class Structure:
         self.max_health = max_health;
         self.current_health = max_health;
         self.is_destroyed = False;
-        self.is_interactable = True;
+        self.is_interactable = False;
         self.is_harvestable = False;
         self.is_attackable = False;
         self.is_occupied = False;
@@ -16,8 +16,8 @@ class Structure:
         self.current_health -= enemy.damage;
         if self.current_health <= 0:
             self.is_destroyed = True;
-    
-    def interact(self, miner, delta_time):
+            
+    def update(self, delta_time):
         pass;
     
     def draw(self, screen, position):
@@ -39,7 +39,6 @@ class Constructor(Structure):
         elif type(self.structure) == Crossbow:
             res.append(resources.Resource('wood', 10));
             res.append(resources.Resource('stone', 10));
-            
         
         return res;
         
@@ -66,14 +65,13 @@ class Tree(Structure):
         super().__init__(50);
         self.progress = 0;
         self.is_harvestable = True;
-        self.is_attackable = False;
         
     def draw(self, screen, position):
         x = (position[0] + 0.5) * tiles.TILE_SIZE;
         y = (position[1] + 0.5) * tiles.TILE_SIZE;
         pygame.draw.circle(screen, pygame.Color('darkgreen'), (x, y), tiles.TILE_SIZE // 2);
         
-    def interact(self, miner, delta_time):
+    def harvest(self, miner, delta_time):
         self.progress += delta_time;
         
         if self.progress >= 1:
@@ -89,14 +87,13 @@ class Stone(Structure):
         super().__init__(50);
         self.progress = 0;
         self.is_harvestable = True;
-        self.is_attackable = False;
         
     def draw(self, screen, position):
         x = (position[0] + 0.5) * tiles.TILE_SIZE;
         y = (position[1] + 0.5) * tiles.TILE_SIZE;
         pygame.draw.circle(screen, pygame.Color('grey'), (x, y), tiles.TILE_SIZE // 2);
         
-    def interact(self, miner, delta_time):
+    def harvest(self, miner, delta_time):
         self.progress += delta_time;
         
         if self.progress >= 1:
@@ -112,6 +109,7 @@ class Base(Structure):
         super().__init__(1000);
         self.inventory = [resources.Resource()];
         self.vision_range = 10;
+        self.is_interactable = True;
         
     def draw(self, screen, position):
         x = (position[0] + 0.5) * tiles.TILE_SIZE;
@@ -121,8 +119,6 @@ class Base(Structure):
 class Spike(Structure):
     def __init__(self):
         super().__init__(200);
-        self.is_harvestable = False;
-        self.is_interactable = False;
         self.damage = 5;
         
     def take_damage(self, enemy):
@@ -136,13 +132,23 @@ class Spike(Structure):
         
 class Crossbow(Structure):
     def __init__(self):
-        super().__init__(50);
-        self.is_harvestable = False;
-        self.is_interactable = False;
-        self.vision_range = 5;
-        self.damage = 10;
+        super().__init__(30);
+        self.is_attackable = True;
+        self.cooldown = 10;
+        self.vision_range = 6;
+        self.damage = 20;
+        
+    def attack(self, enemy):
+        self.cooldown = 0;
+        enemy.take_damage(self);
+        print(enemy.is_destroyed);
+        
+    def ready_to_attack(self, delta_time):
+        self.cooldown += delta_time;
+        
+        return self.cooldown >= 1;
         
     def draw(self, screen, position):
         x = (position[0] + 0.5) * tiles.TILE_SIZE;
         y = (position[1] + 0.5) * tiles.TILE_SIZE;
-        pygame.draw.circle(screen, pygame.Color('red'), (x, y), tiles.TILE_SIZE // 2);
+        pygame.draw.circle(screen, pygame.Color('purple'), (x, y), tiles.TILE_SIZE // 2);
