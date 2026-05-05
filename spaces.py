@@ -25,31 +25,28 @@ class Space:
             self.space_enemies.append(unit);
         
     def step(self, delta_time):
-        if not self.is_night:
-            for miner in self.space_miners:
-                miner.update(delta_time);
-        else:
-            for enemy in self.space_enemies:
-                enemy.update(delta_time);
+        for miner in self.space_miners:
+            miner.update(delta_time);
+
+        for enemy in self.space_enemies:
+            enemy.update(delta_time);
         
     def update(self):
-        if not self.is_night:
-            for miner in self.space_miners:
-                curr_x, curr_y = tiles.pixel_to_tile(miner.position);
-                curr_tile = self.grid[curr_y][curr_x];
-                miner.modified_speed = miner.speed * curr_tile.modify_speed();
-                
-                if miner.is_go_to_base():
-                    path = self.find_path(miner, tiles.pixel_to_tile(miner.position), self.base_position);
-                    miner.set_path(path);
-                    miner.set_give_all(self.base);
-        else:
-            for enemy in self.space_enemies:
-                if enemy.is_destroyed: 
-                    self.space_enemies.remove(enemy);
-                curr_x, curr_y = tiles.pixel_to_tile(enemy.position);
-                curr_tile = self.grid[curr_y][curr_x];
-                enemy.modified_speed = enemy.speed * curr_tile.modify_speed();
+        for miner in self.space_miners:
+            curr_x, curr_y = tiles.pixel_to_tile(miner.position);
+            curr_tile = self.grid[curr_y][curr_x];
+            miner.modified_speed = miner.speed * curr_tile.modify_speed();
+            
+            if miner.is_go_to_base():
+                path = self.find_path(miner, tiles.pixel_to_tile(miner.position), self.base_position);
+                miner.set_path(path);
+                miner.set_give_all(self.base);
+        for enemy in self.space_enemies:
+            if enemy.is_destroyed: 
+                self.space_enemies.remove(enemy);
+            curr_x, curr_y = tiles.pixel_to_tile(enemy.position);
+            curr_tile = self.grid[curr_y][curr_x];
+            enemy.modified_speed = enemy.speed * curr_tile.modify_speed();
             
         for y in range(len(self.grid)):
             for x in range(len(self.grid[y])):

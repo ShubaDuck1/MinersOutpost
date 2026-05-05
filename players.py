@@ -128,16 +128,16 @@ class Harvest(PlayerCommand):
         miner.set_harvest(curr_task);
 
 class Build(PlayerCommand):
-    def __init__(self, position, road):
+    def __init__(self, position, structure):
         super().__init__();
         self.position = position;
-        self.road = road;
+        self.structure = structure;
         
-    def get_resource(self, space, miner):
+    def get_resource(self, space):
         type = None;
         amount = 0;
         
-        for i in self.road.inventory:
+        for i in self.structure.inventory:
             if not i.amount:
                 continue;
             
@@ -146,7 +146,7 @@ class Build(PlayerCommand):
                     continue;
                 
                 type = j.type;
-                amount = min(i.amount, j.amount, miner.full);
+                amount = min(i.amount, j.amount);
         
         return type, amount;
         
@@ -229,7 +229,7 @@ class Build(PlayerCommand):
         curr_x, curr_y = self.position;
         curr_task = space.grid[curr_y][curr_x].structure;
         
-        if self.road.check():
+        if not curr_task or self.structure.check():
             self.is_done = True;
             return;
             
@@ -240,11 +240,12 @@ class Build(PlayerCommand):
         if curr_task.is_occupied:
             return;
         
-        miner, path = self.find_path(space, space.base_position);
-        type, amount = self.get_resource(space, miner);
+        type, amount = self.get_resource(space);
         if not amount:
             return;
         
+        miner, path = self.find_path(space, space.base_position);
+        amount = min(amount, miner.full);
         miner.set_path(path);
         miner.set_take_resource(space.base, type, amount);
         

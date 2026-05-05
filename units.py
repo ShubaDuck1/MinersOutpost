@@ -38,6 +38,7 @@ class Miner(Unit):
         elif type == 'horse':
             super().__init__(2, position, 5);
         
+        self.type = type;
         self.vision_range = 3;
         self.inventory = resources.Resource();
         self.full = 5;
@@ -67,9 +68,12 @@ class Miner(Unit):
         return True;  
     
     def can_go_through(self, tile):
-        if tile.structure and type(tile.structure) != structures.Spike:
-            return False;
-        return True;
+        if self.type == 'default':
+            if tile.structure and type(tile.structure) != structures.Spike:
+                return False;
+            return True;
+        elif self.type == 'horse':
+            return tile.type == 'road';
     
 class Enemy(Unit):
     def __init__(self, position):

@@ -55,6 +55,11 @@ class Constructor(Structure):
             tile.structure = None;
         else:
             tile.structure = self.structure;
+            
+    def draw(self, screen, position):
+        x = (position[0] + 0.5) * tiles.TILE_SIZE;
+        y = (position[1] + 0.5) * tiles.TILE_SIZE;
+        pygame.draw.circle(screen, pygame.Color('orange'), (x, y), tiles.TILE_SIZE // 2);
     
 class Tree(Structure):
     def __init__(self):
