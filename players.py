@@ -284,6 +284,16 @@ class PlayerAction:
         self.task.put((1, self.counter, Build(position, curr_tile.structure)));
         self.counter += 1;
         
+    def add_bridge(self, position):
+        curr_tile = self.space.grid[position[1]][position[0]];
+        struc = structures.Bridge();
+        if not struc.can_build(curr_tile):
+            return;
+        
+        curr_tile.set_structure(structures.Constructor(struc));
+        self.task.put((1, self.counter, Build(position, curr_tile.structure)));
+        self.counter += 1;
+        
     def add_spike(self, position):
         curr_tile = self.space.grid[position[1]][position[0]];
         struc = structures.Spike();

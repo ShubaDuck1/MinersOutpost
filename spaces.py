@@ -184,7 +184,7 @@ class Space:
                         
     def find_path(self, miner, position, destination):
         curr_tile = self.grid[destination[1]][destination[0]];
-        if not curr_tile.structure.is_interactable:
+        if curr_tile.structure and not curr_tile.structure.is_interactable:
             return None;
         
         found_path = False;

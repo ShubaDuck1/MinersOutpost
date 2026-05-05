@@ -124,6 +124,11 @@ class Bridge(Structure):
     def __init__(self):
         super().__init__(10);
         
+    def can_build(self, tile):
+        if tile.type == 'water':
+            return True;
+        return False;
+        
     def draw(self, screen, position):
         x = position[0];
         y = position[1];

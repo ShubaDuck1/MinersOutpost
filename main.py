@@ -38,8 +38,10 @@ def event_handler():
         elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_2:
             current_mode = 'build road';
         elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_3:
-            current_mode = 'build spike';
+            current_mode = 'build bridge';
         elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_4:
+            current_mode = 'build spike';
+        elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_5:
             current_mode = 'build crossbow';
 
     if current_mode == 'select':
@@ -56,6 +58,10 @@ def event_handler():
     if current_mode == 'build road':
         if pygame.mouse.get_pressed()[0]:
             player_action.add_road(tiles.pixel_to_tile(pygame.mouse.get_pos()));
+            
+    if current_mode == 'build bridge':
+        if pygame.mouse.get_pressed()[0]:
+            player_action.add_bridge(tiles.pixel_to_tile(pygame.mouse.get_pos()));
             
     if current_mode == 'build spike':
         if pygame.mouse.get_pressed()[0]:
@@ -91,8 +97,8 @@ def show_text(screen):
         
 def renderer():
     tiles.draw_tile(screen, grid);
-    space.draw_space(screen);
     tiles.draw_structure(screen, grid);
+    space.draw_space(screen);
     tiles.draw_fog(screen, grid);
     
     if drag_pos:
