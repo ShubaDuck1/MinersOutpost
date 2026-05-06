@@ -37,7 +37,11 @@ class MainMenuRenderer(Renderer):
         self.main_menu = main_menu;
         
     def draw_background(self, screen):
-        screen.fill(pygame.Color('#36393e'));
+        screen.fill(pygame.Color("#08d958"));
+        font = pygame.font.Font(load.path('data/font/Minecraft.ttf'), 150);
+        text_surface = font.render(f"Minecraft", True, pygame.Color('white'));
+        text_rect = text_surface.get_rect(center = (settings.WIDTH // 2, 220));
+        screen.blit(text_surface, text_rect);
         
     def draw(self, screen):
         self.draw_background(screen);

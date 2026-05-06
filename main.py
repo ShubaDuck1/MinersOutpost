@@ -14,10 +14,10 @@ clock = pygame.Clock();
 main_menu = menu.MainMenu();
 pause_menu = menu.PauseMenu();
 current_scene = 'main menu';
+fast_forward = 3;
 
 def reload():
     global time_left;
-    global fast_forward;
     global gen;
     global grid;
     global space;
@@ -28,7 +28,6 @@ def reload():
     global is_pause;
     
     time_left = settings.DAY_TIME;
-    fast_forward = 6;
     gen = load.Generator(69696969);
     grid = gen.grid;
     space = spaces.Space(grid, gen.base_position);
@@ -81,37 +80,37 @@ def event_handler():
             elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_5:
                 current_mode = 'build crossbow';
 
-    if current_mode == 'select':
-        if pygame.mouse.get_just_pressed()[0]:
-            drag_pos = pygame.mouse.get_pos();
-        
-        if pygame.mouse.get_just_released()[0]:
-            left, top = tiles.pixel_to_tile(drag_pos);
-            right, bottom = tiles.pixel_to_tile(pygame.mouse.get_pos());
+        if current_mode == 'select':
+            if pygame.mouse.get_just_pressed()[0]:
+                drag_pos = pygame.mouse.get_pos();
             
-            player_action.add_harvest(left, top, right, bottom);
-            drag_pos = None;
+            if pygame.mouse.get_just_released()[0]:
+                left, top = tiles.pixel_to_tile(drag_pos);
+                right, bottom = tiles.pixel_to_tile(pygame.mouse.get_pos());
                 
-    if current_mode == 'build road':
-        if pygame.mouse.get_pressed()[0]:
-            player_action.add_road(tiles.pixel_to_tile(pygame.mouse.get_pos()));
-            
-    if current_mode == 'build bridge':
-        if pygame.mouse.get_pressed()[0]:
-            player_action.add_bridge(tiles.pixel_to_tile(pygame.mouse.get_pos()));
-            
-    if current_mode == 'build spike':
-        if pygame.mouse.get_pressed()[0]:
-            player_action.add_spike(tiles.pixel_to_tile(pygame.mouse.get_pos()));
-            
-    if current_mode == 'build crossbow':
-        if pygame.mouse.get_pressed()[0]:
-            player_action.add_crossbow(tiles.pixel_to_tile(pygame.mouse.get_pos()));
+                player_action.add_harvest(left, top, right, bottom);
+                drag_pos = None;
+                    
+        if current_mode == 'build road':
+            if pygame.mouse.get_pressed()[0]:
+                player_action.add_road(tiles.pixel_to_tile(pygame.mouse.get_pos()));
+                
+        if current_mode == 'build bridge':
+            if pygame.mouse.get_pressed()[0]:
+                player_action.add_bridge(tiles.pixel_to_tile(pygame.mouse.get_pos()));
+                
+        if current_mode == 'build spike':
+            if pygame.mouse.get_pressed()[0]:
+                player_action.add_spike(tiles.pixel_to_tile(pygame.mouse.get_pos()));
+                
+        if current_mode == 'build crossbow':
+            if pygame.mouse.get_pressed()[0]:
+                player_action.add_crossbow(tiles.pixel_to_tile(pygame.mouse.get_pos()));
             
 
 def show_text(screen):
     global time_left;
-    font = pygame.font.SysFont("Arial", 18, bold=True);
+    font = pygame.font.Font(load.path('data/font/Minecraft.ttf'), 18);
     fps_text = font.render(f"FPS: {clock.get_fps():.2f}", True, pygame.Color("white"));
     screen.blit(fps_text, (5, 5));
     
@@ -142,15 +141,14 @@ def renderer():
         space.draw_space(screen);
         tiles.draw_fog(screen, grid);
         
-        if drag_pos:
-            tiles.draw_drag(screen, drag_pos);
-        else:
-            tiles.draw_hover(screen);
-        
         show_text(screen);
         
         if current_scene == 'pause menu':
             pause_menu.renderer.draw(screen);
+        elif drag_pos:
+            tiles.draw_drag(screen, drag_pos);
+        else:
+            tiles.draw_hover(screen);
     
     pygame.display.flip();
 
@@ -189,6 +187,9 @@ def run(screen):
             if time_left <= 0:
                 time_left = settings.DAY_TIME;
                 space.set_night_time();
+                
+            if space.base.is_destroyed:
+                current_scene = 'pause menu';
             
             if not space.is_night:
                 player_action.update();
