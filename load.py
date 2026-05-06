@@ -3,6 +3,7 @@ import settings;
 import structures;
 import random;
 import numpy as np
+from pathlib import Path;
 from perlin_numpy import generate_perlin_noise_2d
 
 class Generator:
@@ -69,4 +70,7 @@ class Generator:
             
         self.base_position = (x, y);
         
-    
+def path(filename):
+    tmp = Path(__file__).resolve().parent;
+    res = tmp / filename;
+    return res;

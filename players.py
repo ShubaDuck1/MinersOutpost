@@ -12,7 +12,7 @@ class PlayerCommand:
         raise NotImplementedError("execute() Not Implemented");
     
 class Harvest(PlayerCommand):
-    def __init__(self, top, left, bottom, right):
+    def __init__(self, left, top, right, bottom):
         super().__init__();
         if top > bottom:
             top, bottom = bottom, top;

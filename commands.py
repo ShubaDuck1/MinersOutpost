@@ -17,7 +17,7 @@ class Command:
         self.is_done = False;
     
     def execute(self):
-        raise NotImplementedError("execute() Not Implemented");
+        raise NotImplementedError();
     
 SPEED_SCALAR = settings.TILE_SIZE * 2;
     
