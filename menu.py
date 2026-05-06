@@ -61,3 +61,12 @@ class PauseMenu:
         self.exit = Button('Main Menu', settings.WIDTH // 2 - width // 2, 400, width, height);
 
         self.renderer = render.PauseMenuRenderer(self);
+        
+class GameOverMenu:
+    def __init__(self):
+        width = 300;
+        height = 60;
+        self.restart = Button('Restart', settings.WIDTH // 2 - width // 2, 310, width, height);
+        self.exit = Button('Main Menu', settings.WIDTH // 2 - width // 2, 400, width, height);
+
+        self.renderer = render.GameOverMenuRenderer(self);

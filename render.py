@@ -18,19 +18,20 @@ class ButtonRenderer(Renderer):
         left = self.button.left;
         width = self.button.width;
         height = self.button.height
-
-        if self.button.is_pressed:
-            color = pygame.Color('white');
-        else:
-            color = pygame.Color('grey');
-    
+        
         g = pygame.Rect(left, top, width, height);
-        pygame.draw.rect(screen, color, g);
+        pygame.draw.rect(screen, pygame.Color('grey'), g);
         
         font = pygame.font.Font(load.path('data/font/Minecraft.ttf'), 25);
         text_surface = font.render(f"{self.button.name}", True, pygame.Color('white'));
         text_rect = text_surface.get_rect(center = (g.center[0], g.center[1] + 2));
-        screen.blit(text_surface, text_rect)
+        screen.blit(text_surface, text_rect);
+        
+        if self.button.is_pressed:
+            g = pygame.Rect(0, 0, width, height);
+            temp_surface = pygame.Surface((width, height), pygame.SRCALPHA);
+            pygame.draw.rect(temp_surface, (0, 0, 0, 25), g);
+            screen.blit(temp_surface, (left, top));
         
 class MainMenuRenderer(Renderer):
     def __init__(self, main_menu):
@@ -55,7 +56,7 @@ class PauseMenuRenderer(Renderer):
         
     def draw_background(self, screen):
         temp_surface = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA);
-        g = g = pygame.Rect(0, 0, settings.WIDTH, settings.HEIGHT);
+        g = pygame.Rect(0, 0, settings.WIDTH, settings.HEIGHT);
         pygame.draw.rect(temp_surface, (0, 0, 0, 100), g);
         screen.blit(temp_surface, (0, 0));
         
@@ -65,3 +66,22 @@ class PauseMenuRenderer(Renderer):
         self.pause_menu.restart.renderer.draw(screen);
         self.pause_menu.exit.renderer.draw(screen);
     
+class GameOverMenuRenderer(Renderer):
+    def __init__(self, pause_menu):
+        self.pause_menu = pause_menu;
+        
+    def draw_background(self, screen):
+        temp_surface = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA);
+        g = pygame.Rect(0, 0, settings.WIDTH, settings.HEIGHT);
+        pygame.draw.rect(temp_surface, (0, 0, 0, 100), g);
+        screen.blit(temp_surface, (0, 0));
+        
+        font = pygame.font.Font(load.path('data/font/Minecraft.ttf'), 80);
+        text_surface = font.render(f"Game Over", True, pygame.Color('white'));
+        text_rect = text_surface.get_rect(center = (settings.WIDTH // 2, 200));
+        screen.blit(text_surface, text_rect);
+        
+    def draw(self, screen):
+        self.draw_background(screen);
+        self.pause_menu.restart.renderer.draw(screen);
+        self.pause_menu.exit.renderer.draw(screen);
