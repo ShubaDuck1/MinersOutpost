@@ -30,7 +30,7 @@ class ButtonRenderer(Renderer):
         if self.button.is_pressed:
             g = pygame.Rect(0, 0, width, height);
             temp_surface = pygame.Surface((width, height), pygame.SRCALPHA);
-            pygame.draw.rect(temp_surface, (0, 0, 0, 25), g);
+            temp_surface.fill((0, 0, 0, 25));
             screen.blit(temp_surface, (left, top));
         
 class MainMenuRenderer(Renderer):
@@ -56,8 +56,7 @@ class PauseMenuRenderer(Renderer):
         
     def draw_background(self, screen):
         temp_surface = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA);
-        g = pygame.Rect(0, 0, settings.WIDTH, settings.HEIGHT);
-        pygame.draw.rect(temp_surface, (0, 0, 0, 100), g);
+        temp_surface.fill((0, 0, 0, 100));
         screen.blit(temp_surface, (0, 0));
         
     def draw(self, screen):
@@ -72,8 +71,7 @@ class GameOverMenuRenderer(Renderer):
         
     def draw_background(self, screen):
         temp_surface = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA);
-        g = pygame.Rect(0, 0, settings.WIDTH, settings.HEIGHT);
-        pygame.draw.rect(temp_surface, (0, 0, 0, 100), g);
+        temp_surface.fill((0, 0, 0, 100));
         screen.blit(temp_surface, (0, 0));
         
         font = pygame.font.Font(load.path('data/font/Minecraft.ttf'), 80);

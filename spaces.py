@@ -340,7 +340,6 @@ class Space:
         
     def draw_night(self, screen):
         temp_surface = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA);
-        g = g = pygame.Rect(0, 0, settings.WIDTH, settings.HEIGHT);
-        pygame.draw.rect(temp_surface, (0, 0, 0, 100), g);
+        temp_surface.fill((0, 0, 0, 100));
         screen.blit(temp_surface, (0, 0));
             
