@@ -286,11 +286,10 @@ class PlayerAction:
         
     def add_bridge(self, position):
         curr_tile = self.space.grid[position[1]][position[0]];
-        struc = structures.Bridge();
-        if not struc.can_build(curr_tile):
+        if curr_tile.structure or not curr_tile.type == 'water':
             return;
         
-        curr_tile.set_structure(structures.Constructor(struc));
+        curr_tile.set_structure(structures.Constructor('bridge'));
         self.task.put((1, self.counter, Build(position, curr_tile.structure)));
         self.counter += 1;
         
@@ -329,12 +328,3 @@ class PlayerAction:
         
         for x in tmp:
             self.task.put(x);
-                
-        # for curr_task in self.task:
-        #     cnt = self.space.count_not_busy();
-        #     if not cnt:
-        #         break;
-            
-        #     curr_task.execute(self.space);
-        #     if curr_task.is_done:
-        #         self.task.remove(curr_task);

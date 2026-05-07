@@ -75,15 +75,13 @@ class Miner(Unit):
     
     def can_go_through(self, tile):
         if self.type == 'default':
-            if tile.structure and type(tile.structure) in (structures.Spike, structures.Bridge, structures.Constructor):
+            if tile.structure and type(tile.structure) in (structures.Spike, structures.Constructor):
                 return True;
             if not tile.structure:
                 return True;
             return False;
             
         elif self.type == 'horse':
-            if tile.structure and type(tile.structure) == structures.Bridge:
-                return True;
             if tile.type == 'road':
                 return True;
             return False;
@@ -108,8 +106,6 @@ class Enemy(Unit):
         self.task.put(commands.Attack(self, space.grid[space.base_position[1]][space.base_position[0]]));
         
     def can_go_through(self, tile):
-        if tile.structure and type(tile.structure) == structures.Bridge:
-            return True;
         if not tile.structure:
             return True;
         return False;

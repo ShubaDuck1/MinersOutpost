@@ -188,8 +188,8 @@ def renderer():
         
     elif current_scene == 'play' or 'pause menu' or 'game over':
         tiles.draw_tile(screen, grid);
-        tiles.draw_structure(screen, grid);
         space.draw_space(screen);
+        tiles.draw_structure(screen, grid, delta_time);
         tiles.draw_fog(screen, grid);
         
         show_text(screen);
@@ -210,6 +210,7 @@ def run(screen):
     global current_scene;
     global is_running;
     global is_pause;
+    global delta_time;
     
     while is_running:
         event_handler();

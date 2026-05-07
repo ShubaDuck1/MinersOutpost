@@ -23,9 +23,7 @@ class Tile:
         self._type = value;
         
     def modify_speed(self):
-        if type(self.structure) == structures.Bridge:
-            return 1.5;
-        elif self.type == 'grass':
+        if self.type == 'grass':
             return 1;
         elif self.type == 'road':
             return 1.5;
@@ -80,12 +78,15 @@ def draw_fog(screen, grid):
             g = pygame.Rect(x * settings.TILE_SIZE, y * settings.TILE_SIZE, settings.TILE_SIZE, settings.TILE_SIZE);
             pygame.draw.rect(screen, pygame.Color('grey'), g);
 
-def draw_structure(screen, grid):
+def draw_structure(screen, grid, delta_time):
     for y in range(len(grid)):
         for x in range(len(grid[y])):
             curr_tile = grid[y][x];
             if curr_tile.structure and not curr_tile.is_foggy:
-                curr_tile.structure.draw(screen, (x, y));
+                try:
+                    curr_tile.structure.renderer.draw(screen, (x, y), delta_time);
+                except:
+                    curr_tile.structure.draw(screen, (x, y));
     
 def draw_hover(screen):
     x, y = pixel_to_tile(pygame.mouse.get_pos());

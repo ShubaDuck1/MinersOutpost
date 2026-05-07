@@ -1,6 +1,7 @@
 import pygame;
 import settings;
 import resources;
+import render;
 
 class Structure:
     def __init__(self, max_health):
@@ -35,13 +36,13 @@ class Constructor(Structure):
         
         if self.structure == 'road':
             res.append(resources.Resource('stone', 1));
+        elif self.structure == 'bridge':
+            res.append(resources.Resource('wood', 10));
+            res.append(resources.Resource('stone', 10));
         elif type(self.structure) == Spike:
             res.append(resources.Resource('wood', 10));
         elif type(self.structure) == Crossbow:
             res.append(resources.Resource('wood', 20));
-            res.append(resources.Resource('stone', 10));
-        elif type(self.structure) == Bridge:
-            res.append(resources.Resource('wood', 10));
             res.append(resources.Resource('stone', 10));
         
         return res;
@@ -53,7 +54,7 @@ class Constructor(Structure):
         return True;
         
     def update(self, tile):
-        if self.structure == 'road':
+        if self.structure == 'road' or self.structure == 'bridge':
             tile.type = 'road';
             tile.structure = None;
         else:
@@ -69,6 +70,8 @@ class Tree(Structure):
         super().__init__(50);
         self.progress = 0;
         self.is_harvestable = True;
+        
+        self.renderer = render.TreeRenderer(self);
         
     def draw(self, screen, position):
         x = (position[0] + 0.5) * settings.TILE_SIZE;
@@ -91,6 +94,8 @@ class Stone(Structure):
         super().__init__(50);
         self.progress = 0;
         self.is_harvestable = True;
+        
+        self.renderer = render.StoneRenderer(self);
         
     def draw(self, screen, position):
         x = (position[0] + 0.5) * settings.TILE_SIZE;
@@ -119,21 +124,6 @@ class Base(Structure):
         x = (position[0] + 0.5) * settings.TILE_SIZE;
         y = (position[1] + 0.5) * settings.TILE_SIZE;
         pygame.draw.circle(screen, pygame.Color('blue'), (x, y), settings.TILE_SIZE // 2);
-        
-class Bridge(Structure):
-    def __init__(self):
-        super().__init__(10);
-        
-    def can_build(self, tile):
-        if tile.type == 'water':
-            return True;
-        return False;
-        
-    def draw(self, screen, position):
-        x = position[0];
-        y = position[1];
-        g = pygame.Rect(x * settings.TILE_SIZE, y * settings.TILE_SIZE, settings.TILE_SIZE, settings.TILE_SIZE);
-        pygame.draw.rect(screen, pygame.Color('darkgrey'), g);
     
 class Spike(Structure):
     def __init__(self):
