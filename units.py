@@ -75,7 +75,7 @@ class Miner(Unit):
     
     def can_go_through(self, tile):
         if self.type == 'default':
-            if tile.structure and type(tile.structure) in (structures.Spike, structures.Bridge):
+            if tile.structure and type(tile.structure) in (structures.Spike, structures.Bridge, structures.Constructor):
                 return True;
             if not tile.structure:
                 return True;

@@ -29,7 +29,7 @@ def reload():
     global is_pause;
     
     time_left = settings.DAY_TIME;
-    gen = load.Generator(69696969);
+    gen = load.Generator();
     grid = gen.grid;
     space = spaces.Space(grid, gen.base_position);
     player_action = players.PlayerAction(space);
@@ -70,7 +70,7 @@ def event_handler():
                 break;
             elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                 reload();
-                current_scene = 'menu';
+                current_scene = 'main menu';
     
     elif current_scene == 'play':
         for ev in pygame.event.get():

@@ -99,7 +99,7 @@ class TakeResource(Command):
         amount = self.amount;
         
         for resource in self.structure.inventory:
-            if resource.remove(type, amount):
+            if resource.remove(type, amount, False):
                 self.unit.inventory.add(type, amount);
                 break;
         self.is_done = True;

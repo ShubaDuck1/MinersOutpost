@@ -18,7 +18,7 @@ class Resource:
         self.amount += amount;
         return True;
     
-    def remove(self, type, amount = 1):
+    def remove(self, type, amount = 1, reset_type = True):
         if type != self.type:
             return False;
         
@@ -26,6 +26,6 @@ class Resource:
             return False;
         
         self.amount -= amount;
-        if self.amount == 0:
+        if reset_type and self.amount == 0:
             self.type = None;
         return True;

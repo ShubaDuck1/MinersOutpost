@@ -7,7 +7,7 @@ from pathlib import Path;
 from perlin_numpy import generate_perlin_noise_2d
 
 class Generator:
-    def __init__(self, seed = None):
+    def __init__(self, seed = random.randint(0, 2**31)):
         self.seed = seed;
         self.grid = [[tiles.Tile() for a in range(settings.TILE_WIDTH)] for b in range(settings.TILE_HEIGHT)];
         
@@ -39,7 +39,7 @@ class Generator:
         tree_amount = random.randint(1000, 1500);
         
         for i in range(tree_amount):
-            seed = random.randint(0, 10 ** 31);
+            seed = random.randint(0, 2 ** 31);
             random.seed(seed);
             
             x = random.randint(0, settings.TILE_WIDTH - 1);
@@ -50,7 +50,7 @@ class Generator:
         stone_amount = random.randint(300, 400);
         
         for i in range(stone_amount):
-            seed = random.randint(0, 10 ** 31);
+            seed = random.randint(0, 2 ** 31);
             random.seed(seed);
             
             x = random.randint(0, settings.TILE_WIDTH - 1);

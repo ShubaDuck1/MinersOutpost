@@ -78,8 +78,8 @@ class Tree(Structure):
     def harvest(self, miner, delta_time):
         self.progress += delta_time;
         
-        if self.progress >= 1:
-            self.progress -= 1;
+        if self.progress >= 5:
+            self.progress = 0;
             self.current_health -= 1;
             miner.inventory.add('wood');
         
@@ -100,8 +100,8 @@ class Stone(Structure):
     def harvest(self, miner, delta_time):
         self.progress += delta_time;
         
-        if self.progress >= 1:
-            self.progress -= 1;
+        if self.progress >= 10:
+            self.progress = 0;
             self.current_health -= 1;
             miner.inventory.add('stone');
         
