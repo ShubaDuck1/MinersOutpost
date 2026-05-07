@@ -1,6 +1,8 @@
 import settings;
 import pygame;
 import render;
+import load;
+import pickle;
 
 class Button:
     def __init__(self, name, left, top, width, height):
@@ -70,3 +72,38 @@ class GameOverMenu:
         self.exit = Button('Main Menu', settings.WIDTH // 2 - width // 2, 400, width, height);
 
         self.renderer = render.GameOverMenuRenderer(self);
+        
+class Scoreboard:
+    def __init__(self, filename = load.path('asset/scoreboard.pkl')):
+        self.file = filename;
+        self.scores = [];
+        self.load_score();
+        
+        self.board_width = 400;
+        self.board_height = 500;
+        
+        width = 150;
+        height = 60;
+        self.back = Button('Back', settings.WIDTH // 2 + self.board_width // 2 - width, settings.HEIGHT - 30 - height, width, height);
+        self.renderer = render.ScoreboardRenderer(self);
+        
+    def add(self, data):
+        self.scores.append(data);
+        self.scores.sort(key=lambda x: x["score"], reverse=True);
+        
+    def save_score(self, filename = None):
+        if not filename:
+            filename = self.file;
+            
+        with open(filename, 'wb') as f:
+            pickle.dump(self.scores, f);
+            
+    def load_score(self, filename = None):
+        if not filename:
+            filename = self.file;
+        
+        try:
+            with open(filename, 'rb') as f:
+                self.scores = pickle.load(f);
+        except:
+            return;

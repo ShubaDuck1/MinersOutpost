@@ -7,7 +7,9 @@ from pathlib import Path;
 from perlin_numpy import generate_perlin_noise_2d
 
 class Generator:
-    def __init__(self, seed = random.randint(0, 2**31)):
+    def __init__(self, seed = None):
+        if not seed:
+            seed = random.randint(0, 2**31);
         self.seed = seed;
         self.grid = [[tiles.Tile() for a in range(settings.TILE_WIDTH)] for b in range(settings.TILE_HEIGHT)];
         

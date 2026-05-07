@@ -14,6 +14,7 @@ clock = pygame.Clock();
 main_menu = menu.MainMenu();
 pause_menu = menu.PauseMenu();
 game_over = menu.GameOverMenu();
+scoreboard = menu.Scoreboard();
 current_scene = 'main menu';
 fast_forward = 3;
 
@@ -54,6 +55,13 @@ def event_handler():
             if ev.type == pygame.QUIT:
                 is_running = False;
                 break;
+            
+        if main_menu.play.check_pressed():
+            current_scene = 'play';
+        elif main_menu.scoreboard.check_pressed():
+            current_scene = 'scoreboard';
+        elif main_menu.exit.check_pressed():
+            is_running = False;
     
     elif current_scene == 'pause menu':
         for ev in pygame.event.get():
@@ -63,6 +71,16 @@ def event_handler():
             elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                 current_scene = 'play';
                 
+        is_pause = True;
+            
+        if pause_menu.play.check_pressed():
+            current_scene = 'play';
+        elif pause_menu.restart.check_pressed():
+            reload();
+            current_scene = 'play';
+        elif pause_menu.exit.check_pressed():
+            current_scene = 'main menu';
+                
     elif current_scene == 'game over':
         for ev in pygame.event.get():
             if ev.type == pygame.QUIT:
@@ -71,6 +89,26 @@ def event_handler():
             elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                 reload();
                 current_scene = 'main menu';
+                
+        if game_over.restart.check_pressed():
+            reload();
+            current_scene = 'play';
+        if game_over.exit.check_pressed():
+            reload();
+            current_scene = 'main menu';
+                
+    elif current_scene == 'scoreboard':
+        for ev in pygame.event.get():
+            if ev.type == pygame.QUIT:
+                is_running = False;
+                break;
+            elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
+                current_scene = 'main menu';
+            elif ev.type == pygame.MOUSEWHEEL:
+                scoreboard.renderer.start_line += ev.y * 20;
+                
+        if scoreboard.back.check_pressed():
+            current_scene = 'main menu';
     
     elif current_scene == 'play':
         for ev in pygame.event.get():
@@ -120,7 +158,7 @@ def event_handler():
 
 def show_text(screen):
     global time_left;
-    font = pygame.font.Font(load.path('data/font/Minecraft.ttf'), 18);
+    font = pygame.font.Font(load.path('asset/font/Minecraft.ttf'), 18);
     fps_text = font.render(f"FPS: {clock.get_fps():.2f}", True, pygame.Color("white"));
     screen.blit(fps_text, (5, 5));
     
@@ -144,6 +182,9 @@ def show_text(screen):
 def renderer():
     if current_scene == 'main menu':
         main_menu.renderer.draw(screen);
+        
+    elif current_scene == 'scoreboard':
+        scoreboard.renderer.draw(screen);
         
     elif current_scene == 'play' or 'pause menu' or 'game over':
         tiles.draw_tile(screen, grid);
@@ -173,37 +214,10 @@ def run(screen):
     while is_running:
         event_handler();
         delta_time = clock.tick(settings.FPS) / 1000;
-        
-        if current_scene == 'main menu':
-            if main_menu.play.check_pressed():
-                current_scene = 'play';
-            if main_menu.scoreboard.check_pressed():
-                pass;
-                # current_scene = 'scoreboard';
-            if main_menu.exit.check_pressed():
-                is_running = False;
-                
-        elif current_scene == 'pause menu':
-            is_pause = True;
-            
-            if pause_menu.play.check_pressed():
-                current_scene = 'play';
-            if pause_menu.restart.check_pressed():
-                reload();
-                current_scene = 'play';
-            if pause_menu.exit.check_pressed():
-                current_scene = 'main menu';
-                
-        elif current_scene == 'game over':
-            if game_over.restart.check_pressed():
-                reload();
-                current_scene = 'play';
-            if game_over.exit.check_pressed():
-                reload();
-                current_scene = 'main menu';
-                
-        elif current_scene == 'play':
+
+        if current_scene == 'play':
             is_pause = False;
+            
             if time_left <= 0:
                 time_left = settings.DAY_TIME;
                 space.set_night_time();

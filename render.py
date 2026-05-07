@@ -22,7 +22,7 @@ class ButtonRenderer(Renderer):
         g = pygame.Rect(left, top, width, height);
         pygame.draw.rect(screen, pygame.Color('grey'), g);
         
-        font = pygame.font.Font(load.path('data/font/Minecraft.ttf'), 25);
+        font = pygame.font.Font(load.path('asset/font/Minecraft.ttf'), 25);
         text_surface = font.render(f"{self.button.name}", True, pygame.Color('white'));
         text_rect = text_surface.get_rect(center = (g.center[0], g.center[1] + 2));
         screen.blit(text_surface, text_rect);
@@ -39,7 +39,7 @@ class MainMenuRenderer(Renderer):
         
     def draw_background(self, screen):
         screen.fill(pygame.Color("#08d958"));
-        font = pygame.font.Font(load.path('data/font/Minecraft.ttf'), 150);
+        font = pygame.font.Font(load.path('asset/font/Minecraft.ttf'), 150);
         text_surface = font.render(f"Minecraft", True, pygame.Color('white'));
         text_rect = text_surface.get_rect(center = (settings.WIDTH // 2, 220));
         screen.blit(text_surface, text_rect);
@@ -74,7 +74,7 @@ class GameOverMenuRenderer(Renderer):
         temp_surface.fill((0, 0, 0, 100));
         screen.blit(temp_surface, (0, 0));
         
-        font = pygame.font.Font(load.path('data/font/Minecraft.ttf'), 80);
+        font = pygame.font.Font(load.path('asset/font/Minecraft.ttf'), 80);
         text_surface = font.render(f"Game Over", True, pygame.Color('white'));
         text_rect = text_surface.get_rect(center = (settings.WIDTH // 2, 200));
         screen.blit(text_surface, text_rect);
@@ -83,3 +83,52 @@ class GameOverMenuRenderer(Renderer):
         self.draw_background(screen);
         self.pause_menu.restart.renderer.draw(screen);
         self.pause_menu.exit.renderer.draw(screen);
+        
+class ScoreboardRenderer(Renderer):
+    def __init__(self, scoreboard):
+        self.scoreboard = scoreboard;
+        self.start_line = 100;
+    
+    def draw_background(self, screen):
+        screen.fill(pygame.Color("#08d958"));
+        
+        font = pygame.font.Font(load.path('asset/font/Minecraft.ttf'), 40);
+        text_surface = font.render(f"Scoreboard", True, pygame.Color('white'));
+        text_rect = text_surface.get_rect(center = (settings.WIDTH // 2, 50));
+        screen.blit(text_surface, text_rect);
+        
+    def draw(self, screen):
+        
+        self.draw_background(screen);
+        self.scoreboard.back.renderer.draw(screen);
+        
+        font = pygame.font.Font(load.path('asset/font/Minecraft.ttf'), 25);       
+        width = self.scoreboard.board_width;
+        height = self.scoreboard.board_height;
+        offset = 30;
+        
+        self.start_line = max(self.start_line, height - offset * (len(self.scoreboard.scores) + 1));
+        self.start_line = min(self.start_line, 0);
+        curr_line = self.start_line;
+        
+        board_surface = pygame.Surface((width, height), pygame.SRCALPHA);
+        board_rect = board_surface.get_rect(center = (settings.WIDTH // 2, settings.HEIGHT // 2));
+        
+        for data in self.scoreboard.scores:
+            if curr_line + offset >= height:
+                text_surface = font.render(f"...", True, pygame.Color('white'));
+                text_rect = text_surface.get_rect(topleft = (0, curr_line));
+                board_surface.blit(text_surface, text_rect);
+                break;
+            
+            text_surface = font.render(f"{data['name']}", True, pygame.Color('white'));
+            text_rect = text_surface.get_rect(topleft = (0, curr_line));
+            board_surface.blit(text_surface, text_rect);
+            
+            text_surface = font.render(f"{data['score']}", True, pygame.Color('white'));
+            text_rect = text_surface.get_rect(topright = (width, curr_line));
+            board_surface.blit(text_surface, text_rect);
+            
+            curr_line += offset;
+
+        screen.blit(board_surface, board_rect);
