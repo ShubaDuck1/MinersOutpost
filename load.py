@@ -40,23 +40,33 @@ class Generator:
             
         tree_amount = random.randint(1000, 1500);
         
-        for i in range(tree_amount):
+        for _ in range(tree_amount):
             seed = random.randint(0, 2 ** 31);
             random.seed(seed);
             
             x = random.randint(0, settings.TILE_WIDTH - 1);
             y = random.randint(0, settings.TILE_HEIGHT - 1);
+            
+            mag = np.hypot(x - self.base_position[0], y - self.base_position[1]);
+            if mag <= 4:
+                continue;
+            
             if not self.grid[y][x].type == 'water':
                 self.grid[y][x].set_structure(structures.Tree());
                 
         stone_amount = random.randint(300, 400);
         
-        for i in range(stone_amount):
+        for _ in range(stone_amount):
             seed = random.randint(0, 2 ** 31);
             random.seed(seed);
             
             x = random.randint(0, settings.TILE_WIDTH - 1);
             y = random.randint(0, settings.TILE_HEIGHT - 1);
+            
+            mag = np.hypot(x - self.base_position[0], y - self.base_position[1]);
+            if mag <= 5:
+                continue;
+            
             if not self.grid[y][x].type == 'water':
                 self.grid[y][x].set_structure(structures.Stone());
                 

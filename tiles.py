@@ -1,6 +1,7 @@
 import pygame;
 import structures;
 import settings;
+import render;
 
 class Tile:
     valid_type = ['grass', 'road', 'water'];
@@ -11,6 +12,8 @@ class Tile:
         self._type = 'grass';
         self.is_foggy = True;
         self.structure = None;
+        
+        self.renderer = render.TileRenderer(self);
         
     @property
     def type(self):
@@ -51,7 +54,7 @@ class Tile:
 def pixel_to_tile(position):
     return int(position[0] // settings.TILE_SIZE), int(position[1] // settings.TILE_SIZE);
         
-def draw_tile(screen, grid):
+def draw_tile(screen, grid, delta_time):
     for y in range(len(grid)):
         for x in range(len(grid[y])):
             curr_tile = grid[y][x];
@@ -64,8 +67,10 @@ def draw_tile(screen, grid):
                 color = (14, 135, 204);
             elif curr_tile.type == 'road':
                 color = pygame.Color('saddlebrown');
+                
             
-            pygame.draw.rect(screen, color, g);
+            curr_tile.renderer.draw(screen, (x, y), delta_time);
+            
             
 def draw_fog(screen, grid):
     for y in range(len(grid)):

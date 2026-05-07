@@ -6,10 +6,12 @@ import players;
 import load;
 import settings;
 import menu;
+import render;
 
 pygame.init()
 
 screen = pygame.display.set_mode((settings.WIDTH, settings.HEIGHT));
+render.load_assets();
 clock = pygame.Clock();
 main_menu = menu.MainMenu();
 pause_menu = menu.PauseMenu();
@@ -17,6 +19,7 @@ game_over = menu.GameOverMenu();
 scoreboard = menu.Scoreboard();
 current_scene = 'main menu';
 fast_forward = 3;
+
 
 def reload():
     global time_left;
@@ -105,7 +108,7 @@ def event_handler():
             elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                 current_scene = 'main menu';
             elif ev.type == pygame.MOUSEWHEEL:
-                scoreboard.renderer.start_line += ev.y * 20;
+                scoreboard.renderer.start_line += ev.y * 40;
                 
         if scoreboard.back.check_pressed():
             current_scene = 'main menu';
@@ -158,7 +161,7 @@ def event_handler():
 
 def show_text(screen):
     global time_left;
-    font = pygame.font.Font(load.path('asset/font/Minecraft.ttf'), 18);
+    font = render.assets['font18'];
     fps_text = font.render(f"FPS: {clock.get_fps():.2f}", True, pygame.Color("white"));
     screen.blit(fps_text, (5, 5));
     
@@ -187,7 +190,7 @@ def renderer():
         scoreboard.renderer.draw(screen);
         
     elif current_scene == 'play' or 'pause menu' or 'game over':
-        tiles.draw_tile(screen, grid);
+        tiles.draw_tile(screen, grid, delta_time);
         space.draw_space(screen);
         tiles.draw_structure(screen, grid, delta_time);
         tiles.draw_fog(screen, grid);
