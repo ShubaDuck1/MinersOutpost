@@ -4,7 +4,7 @@ import settings;
 import render;
 
 class Tile:
-    valid_type = ['grass', 'road', 'water'];
+    valid_type = ['grass', 'road', 'water', 'sand'];
     adjacent = [(1, 0), (0, 1), (-1, 0), (0, -1)];
     diagonal = [(1, 1), (1, -1), (-1, 1), (-1, -1)];
     
@@ -32,6 +32,8 @@ class Tile:
             return 1.5;
         elif self.type == 'water':
             return 0.25;
+        elif self.type == 'sand':
+            return 0.8;
         
     def set_structure(self, structure):
         if self.structure:
@@ -92,15 +94,16 @@ def draw_hover(screen, offset):
     g = pygame.Rect(x * settings.TILE_SIZE + offset[0], y * settings.TILE_SIZE + offset[1], settings.TILE_SIZE, settings.TILE_SIZE);
     pygame.draw.rect(screen, pygame.Color('white'), g, 2)
     
-def draw_drag(screen, last_pos, offset):
-    left, top = pixel_to_tile(last_pos);
-    right, bottom = pixel_to_tile(pygame.mouse.get_pos());
+def draw_drag(screen, last_pos, last_offset, offset):
+    left, top = pixel_to_tile((last_pos[0] - last_offset[0], last_pos[1] - last_offset[1]));
+    pos = pygame.mouse.get_pos();
+    right, bottom = pixel_to_tile((pos[0] - offset[0], pos[1] - offset[1]));
     
     if top > bottom:
         top, bottom = bottom, top;
     if left > right:
         left, right = right, left;
     
-    g = pygame.Rect(left * settings.TILE_SIZE, top * settings.TILE_SIZE, 
+    g = pygame.Rect(left * settings.TILE_SIZE + offset[0], top * settings.TILE_SIZE + offset[1], 
                     (right - left + 1) * settings.TILE_SIZE, (bottom - top + 1) * settings.TILE_SIZE);
     pygame.draw.rect(screen, pygame.Color('white'), g, 2);

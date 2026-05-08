@@ -28,6 +28,7 @@ is_running = True;
 is_pause = False;
 move_camera_pos = None;
 offset = (0, 0);
+last_offset = None;
 settings.FPS = 120;
 
 def reload():
@@ -45,7 +46,14 @@ def reload():
     space = spaces.Space(grid, gen.base_position);
     player_action = players.PlayerAction(space);
     current_mode = 'select';
-    offset = (- space.base_position[0] * settings.TILE_SIZE, - space.base_position[1] * settings.TILE_SIZE);
+    
+    x = settings.WIDTH // 2 - space.base_position[0] * settings.TILE_SIZE;
+    y = settings.HEIGHT // 2 - space.base_position[1] * settings.TILE_SIZE;
+    x = max(x, settings.WIDTH - settings.TILE_SIZE * settings.TILE_WIDTH);
+    y = max(y, settings.HEIGHT - settings.TILE_SIZE * settings.TILE_HEIGHT);
+    x = min(x, 0);
+    y = min(y, 0);
+    offset = (x, y);
     
     for y in range(len(grid)):
         for x in range(len(grid[y])):
@@ -63,6 +71,7 @@ def event_handler():
     global is_pause;
     global move_camera_pos;
     global offset;
+    global last_offset;
     
     if current_scene == 'main menu':
         for ev in pygame.event.get():
@@ -166,6 +175,7 @@ def event_handler():
         if current_mode == 'select':
             if pygame.mouse.get_just_pressed()[0]:
                 drag_pos = pygame.mouse.get_pos();
+                last_offset = offset;
             
             if pygame.mouse.get_just_released()[0]:
                 left, top = tiles.pixel_to_tile(drag_pos);
@@ -237,7 +247,7 @@ def renderer():
         elif current_scene == 'game over':
             game_over.renderer.draw(screen);
         elif drag_pos:
-            tiles.draw_drag(screen, drag_pos, offset);
+            tiles.draw_drag(screen, drag_pos, last_offset, offset);
         else:
             tiles.draw_hover(screen, offset);
     

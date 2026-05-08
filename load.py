@@ -32,6 +32,8 @@ class Generator:
             for x in range(len(self.grid[y])):
                 if noise[y, x] < 0.4:
                     self.grid[y][x].type = 'water';
+                elif noise[y, x] < 0.6:
+                    self.grid[y][x].type = 'sand';
                     
     def generate_resource(self):
         seed = self.seed;
