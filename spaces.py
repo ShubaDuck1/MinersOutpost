@@ -95,6 +95,9 @@ class Space:
         for miner in self.space_miners:
             miner.clear_task();
             path = self.find_path(miner, tiles.pixel_to_tile(miner.position), self.base_position);
+            if not path:
+                continue;
+            
             miner.set_path(path);
             miner.set_path([self.base_position]);
             if miner.inventory.amount:

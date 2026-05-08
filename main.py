@@ -11,15 +11,24 @@ import render;
 pygame.init()
 
 screen = pygame.display.set_mode((settings.WIDTH, settings.HEIGHT));
+
 render.load_assets();
 clock = pygame.Clock();
 main_menu = menu.MainMenu();
 pause_menu = menu.PauseMenu();
 game_over = menu.GameOverMenu();
 scoreboard = menu.Scoreboard();
+cursor_renderer = render.CursorRenderer();
+
+pygame.mouse.set_visible(False);
 current_scene = 'main menu';
 fast_forward = 3;
-
+drag_pos = None;
+is_running = True;
+is_pause = False;
+move_camera_pos = None;
+offset = (0, 0);
+settings.FPS = 120;
 
 def reload():
     global time_left;
@@ -28,9 +37,7 @@ def reload():
     global space;
     global player_action;
     global current_mode;
-    global drag_pos;
-    global is_running;
-    global is_pause;
+    global offset;
     
     time_left = settings.DAY_TIME;
     gen = load.Generator();
@@ -38,9 +45,11 @@ def reload():
     space = spaces.Space(grid, gen.base_position);
     player_action = players.PlayerAction(space);
     current_mode = 'select';
-    drag_pos = None;
-    is_running = True;
-    is_pause = False;
+    offset = (- space.base_position[0] * settings.TILE_SIZE, - space.base_position[1] * settings.TILE_SIZE);
+    
+    for y in range(len(grid)):
+        for x in range(len(grid[y])):
+            grid[y][x].is_foggy = False;
     
     for _ in range(20):
         miner = units.Miner('default', ((space.base_position[0] + 0.5) * settings.TILE_SIZE, (space.base_position[1] + 0.5) * settings.TILE_SIZE));
@@ -52,6 +61,8 @@ def event_handler():
     global current_scene;
     global drag_pos;
     global is_pause;
+    global move_camera_pos;
+    global offset;
     
     if current_scene == 'main menu':
         for ev in pygame.event.get():
@@ -130,6 +141,27 @@ def event_handler():
                 current_mode = 'build spike';
             elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_5:
                 current_mode = 'build crossbow';
+                
+        if pygame.mouse.get_pressed()[2]:
+            if move_camera_pos:
+                
+                x = offset[0] + (pygame.mouse.get_pos()[0] - move_camera_pos[0]);
+                y = offset[1] + (pygame.mouse.get_pos()[1] - move_camera_pos[1]);
+                
+                if not settings.WIDTH - settings.TILE_SIZE * settings.TILE_WIDTH <= x <= 0: 
+                    x = max(x, settings.WIDTH - settings.TILE_SIZE * settings.TILE_WIDTH);
+                    x = min(x, 0);
+                    pygame.mouse.set_pos(move_camera_pos[0], pygame.mouse.get_pos()[1]);
+                        
+                if not settings.HEIGHT - settings.TILE_SIZE * settings.TILE_HEIGHT <= y <= 0:
+                    y = max(y, settings.HEIGHT - settings.TILE_SIZE * settings.TILE_HEIGHT);
+                    y = min(y, 0);
+                    pygame.mouse.set_pos(pygame.mouse.get_pos()[0], move_camera_pos[1]);
+                    
+                offset = (x, y);
+            move_camera_pos = pygame.mouse.get_pos();
+        else:
+            move_camera_pos = None;
 
         if current_mode == 'select':
             if pygame.mouse.get_just_pressed()[0]:
@@ -183,6 +215,7 @@ def show_text(screen):
         screen.blit(res_text, (5, 65 + 20 * i));
         
 def renderer():
+    screen.fill(pygame.Color('black'));
     if current_scene == 'main menu':
         main_menu.renderer.draw(screen);
         
@@ -190,21 +223,25 @@ def renderer():
         scoreboard.renderer.draw(screen);
         
     elif current_scene == 'play' or 'pause menu' or 'game over':
-        tiles.draw_tile(screen, grid, delta_time);
+        tiles.draw_tile(screen, grid, offset, delta_time);
         space.draw_space(screen);
-        tiles.draw_structure(screen, grid, delta_time);
-        tiles.draw_fog(screen, grid);
+        tiles.draw_structure(screen, grid, offset, delta_time);
+        # tiles.draw_fog(screen, grid);
         
         show_text(screen);
+        
+        
         
         if current_scene == 'pause menu':
             pause_menu.renderer.draw(screen);
         elif current_scene == 'game over':
             game_over.renderer.draw(screen);
         elif drag_pos:
-            tiles.draw_drag(screen, drag_pos);
+            tiles.draw_drag(screen, drag_pos, offset);
         else:
-            tiles.draw_hover(screen);
+            tiles.draw_hover(screen, offset);
+    
+    cursor_renderer.draw(screen);
     
     pygame.display.flip();
 

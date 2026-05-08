@@ -1,6 +1,7 @@
 import pygame;
 import load;
 import settings;
+import random;
 
 assets = {};
 def load_assets():
@@ -11,10 +12,23 @@ def load_assets():
     assets['font40'] = pygame.font.Font(load.path('asset/font/Minecraft.ttf'), 40);
     assets['font80'] = pygame.font.Font(load.path('asset/font/Minecraft.ttf'), 80);
     assets['font150'] = pygame.font.Font(load.path('asset/font/Minecraft.ttf'), 150);
-    assets['grass.png'] = pygame.image.load(load.path('asset/sprites/tiles/grass.png'));
-    assets['tree.png'] = pygame.image.load(load.path('asset/sprites/structures/tree.png')).convert_alpha();
+    assets['cursor.png'] = (pygame.image.load(load.path('asset/sprites/UI/cursor.png'))).convert_alpha();
+    assets['grass.png'] = pygame.image.load(load.path('asset/sprites/tiles/grass.png')).convert_alpha();
+    assets['water.png'] = load_sprite_sheet(pygame.image.load(load.path('asset/sprites/tiles/water.png')).convert_alpha(), 16, 16);
+    assets['tree.png'] = (pygame.image.load(load.path('asset/sprites/structures/tree.png'))).convert_alpha();
     assets['stone.png'] = pygame.image.load(load.path('asset/sprites/structures/stone.png')).convert_alpha();
+
+def load_sprite_sheet(sheet: pygame.Surface, width : int, height: int):
+    sheet_width, sheet_height = sheet.get_size();
+    res = []
     
+    for y in range(0, sheet_height, height):
+        for x in range(0, sheet_width, width):
+            rect = pygame.Rect(x, y, width, height);
+            tmp = sheet.subsurface(rect);
+            res.append(tmp);
+            
+    return res;
 
 class Renderer:
     def __init__(self):
@@ -154,37 +168,66 @@ class ScoreboardRenderer(Renderer):
 
         screen.blit(board_surface, board_rect);
         
+class CursorRenderer(Renderer):
+    def __init__(self):
+        self.image = pygame.transform.scale2x(assets['cursor.png']);
+
+    def draw(self, screen):
+        screen.blit(self.image, pygame.mouse.get_pos());
+        
 class TileRenderer(Renderer):
     def __init__(self, tile):
         self.tile = tile;
         self.grass = None;
+        self.water = None;
+        self.road = None;
         
-    def draw(self, screen, position, delta_time):
+    def draw(self, screen, position, offset, delta_time):
         if self.tile.type == 'grass':
             if not self.grass:
                 self.grass = GrassRenderer(self.tile);
             
-            self.grass.draw(screen, position, delta_time);
+            self.grass.draw(screen, position, offset, delta_time);
+            
+        elif self.tile.type == 'water':
+            if not self.water:
+                self.water = WaterRenderer(self.tile);
+            
+            self.water.draw(screen, position, offset, delta_time);
         
 class GrassRenderer(Renderer):
     def __init__(self, tile):
         self.tile = tile;
-        self.image = assets['grass.png'];
+        self.image = pygame.transform.scale2x(assets['grass.png']);
         
-    def draw(self, screen, position, delta_time):
-        x = position[0] * settings.TILE_SIZE;
-        y = position[1] * settings.TILE_SIZE;
+    def draw(self, screen, position, offset, delta_time):
+        x = position[0] * settings.TILE_SIZE + offset[0];
+        y = position[1] * settings.TILE_SIZE + offset[1];
 
         screen.blit(self.image, (x, y));
+        
+class WaterRenderer(Renderer):
+    def __init__(self, tile):
+        self.tile = tile;
+        self.image = assets['water.png'];
+        self.progress = random.random();
+        
+    def draw(self, screen, position, offset, delta_time):
+        x = position[0] * settings.TILE_SIZE + offset[0];
+        y = position[1] * settings.TILE_SIZE + offset[1];
+        
+        self.progress += delta_time * random.random();
+        image = pygame.transform.scale2x(self.image[int(len(self.image) * self.progress) % len(self.image)]);
+        screen.blit(image, (x, y));
         
 class TreeRenderer(Renderer):
     def __init__(self, tree):
         self.tree = tree;
-        self.image = assets['tree.png'];
+        self.image = pygame.transform.scale2x(assets['tree.png']);
         
-    def draw(self, screen, position, delta_time):
-        x = (position[0] + 0.5) * settings.TILE_SIZE;
-        y = (position[1] + 0.5) * settings.TILE_SIZE - 16;
+    def draw(self, screen, position, offset, delta_time):
+        x = (position[0] + 0.5) * settings.TILE_SIZE + offset[0];
+        y = (position[1] + 0.5) * settings.TILE_SIZE - settings.TILE_SIZE + offset[1];
         
         image_rect = self.image.get_rect(center = (x, y));
         screen.blit(self.image, image_rect);
@@ -192,11 +235,11 @@ class TreeRenderer(Renderer):
 class StoneRenderer(Renderer):
     def __init__(self, stone):
         self.stone = stone;
-        self.image = assets['stone.png'];
+        self.image = pygame.transform.scale2x(assets['stone.png']);
         
-    def draw(self, screen, position, delta_time):
-        x = (position[0] + 0.5) * settings.TILE_SIZE;
-        y = (position[1] + 0.5) * settings.TILE_SIZE - 8;
+    def draw(self, screen, position, offset, delta_time):
+        x = (position[0] + 0.5) * settings.TILE_SIZE + offset[0];
+        y = (position[1] + 0.5) * settings.TILE_SIZE - settings.TILE_SIZE // 2+ offset[1];
         
         image_rect = self.image.get_rect(center = (x, y));
         screen.blit(self.image, image_rect);

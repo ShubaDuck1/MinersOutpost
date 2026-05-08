@@ -120,9 +120,9 @@ class Base(Structure):
         self.vision_range = 10;
         self.is_interactable = True;
         
-    def draw(self, screen, position):
-        x = (position[0] + 0.5) * settings.TILE_SIZE;
-        y = (position[1] + 0.5) * settings.TILE_SIZE;
+    def draw(self, screen, position, offset):
+        x = (position[0] + 0.5) * settings.TILE_SIZE + offset[0];
+        y = (position[1] + 0.5) * settings.TILE_SIZE + offset[1];
         pygame.draw.circle(screen, pygame.Color('blue'), (x, y), settings.TILE_SIZE // 2);
     
 class Spike(Structure):
