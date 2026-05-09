@@ -2,6 +2,7 @@ import queue;
 import resources;
 import commands;
 import structures;
+import render;
 
 class Unit:
     def __init__(self, speed, position, radius):
@@ -10,6 +11,7 @@ class Unit:
         self.position = position;
         self.radius = radius;
         self.task = queue.Queue();
+        self.direction = (0, 1);
         
     def is_busy(self):
         return not self.task.empty();
@@ -48,9 +50,10 @@ class Miner(Unit):
         self.vision_range = 3;
         self.inventory = resources.Resource();
         self.full = 5;
+        self.renderer = render.MinerRenderer(self);
         
-    def set_harvest(self, structure):
-        self.task.put(commands.Harvest(self, structure));
+    def set_harvest(self, structure, destination):
+        self.task.put(commands.Harvest(self, structure, destination));
         
     def set_give_all(self, structure):
         self.task.put(commands.GiveAll(self, structure));

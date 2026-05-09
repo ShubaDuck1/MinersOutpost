@@ -331,15 +331,15 @@ class Space:
         path.reverse();
         return path;
                 
-    def draw_space(self, screen: pygame.Surface):
+    def draw_space(self, screen: pygame.Surface, offset, delta_time):
         for miner in self.space_miners:
-            pygame.draw.circle(screen, pygame.Color('blue'), miner.position, miner.radius);
+            miner.renderer.draw(screen, offset, delta_time)
             
-        for enemy in self.space_enemies:
-            pygame.draw.circle(screen, pygame.Color('red'), enemy.position, enemy.radius);
+        # for enemy in self.space_enemies:
+        #     pygame.draw.circle(screen, pygame.Color('red'), enemy.position, enemy.radius);
             
-        if self.is_night:
-            self.draw_night(screen);
+        # if self.is_night:
+        #     self.draw_night(screen);
         
     def draw_night(self, screen):
         temp_surface = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA);

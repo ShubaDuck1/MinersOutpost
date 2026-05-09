@@ -32,6 +32,7 @@ class Move(Command):
         dest_y = (dest_y + 0.5) * settings.TILE_SIZE;
         
         dir_x, dir_y = normalize((dest_x - self.unit.position[0], dest_y - self.unit.position[1]));
+        self.unit.direction = (dir_x, dir_y);
         
         self.unit.position = (self.unit.position[0] + dir_x * self.unit.modified_speed * SPEED_SCALAR * delta_time, 
                               self.unit.position[1] + dir_y * self.unit.modified_speed * SPEED_SCALAR * delta_time);
@@ -62,11 +63,19 @@ class Attack(Command):
             self.tile.structure.take_damage(self.unit);        
 
 class Harvest(Command):
-    def __init__(self, miner, structure):
+    def __init__(self, miner, structure, destination):
         super().__init__(miner);
         self.structure = structure;
+        self.destination = destination;
         
     def execute(self, delta_time):
+        dest_x, dest_y = self.destination;
+        dest_x = (dest_x + 0.5) * settings.TILE_SIZE;
+        dest_y = (dest_y + 0.5) * settings.TILE_SIZE;
+        
+        dir_x, dir_y = normalize((dest_x - self.unit.position[0], dest_y - self.unit.position[1]));
+        self.unit.direction = (dir_x, dir_y);
+        
         self.structure.harvest(self.unit, delta_time);
         
         if self.structure.is_destroyed or self.unit.is_full():

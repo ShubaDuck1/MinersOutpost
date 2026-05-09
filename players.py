@@ -126,7 +126,7 @@ class Harvest(PlayerCommand):
         curr_task = space.grid[dest_y][dest_x].structure;
         curr_task.is_occupied = True;
         miner.set_path(path);
-        miner.set_harvest(curr_task);
+        miner.set_harvest(curr_task, (dest_x, dest_y));
 
 class Build(PlayerCommand):
     def __init__(self, position, structure):

@@ -2,6 +2,12 @@ import pygame;
 import load;
 import settings;
 import random;
+import commands;
+import pygame;
+
+def angle(v1, v2):
+    tmp = pygame.math.Vector2(v1);
+    return tmp.angle_to(v2);
 
 assets = {};
 def load_assets():
@@ -20,6 +26,7 @@ def load_assets():
     assets['tree.png'] = pygame.image.load(load.path('asset/sprites/structures/tree.png')).convert_alpha();
     assets['stone.png'] = pygame.image.load(load.path('asset/sprites/structures/stone.png')).convert_alpha();
     assets['spike.png'] = pygame.image.load(load.path('asset/sprites/structures/spike.png')).convert_alpha();
+    assets['miner.png'] = load_sprite_sheet(pygame.image.load(load.path('asset/sprites/units/blue_ant.png')).convert_alpha(), 48, 48);
 
 def load_sprite_sheet(sheet: pygame.Surface, width : int, height: int):
     sheet_width, sheet_height = sheet.get_size();
@@ -324,7 +331,36 @@ class SpikeRenderer(Renderer):
         self.image = pygame.transform.scale2x(assets['spike.png']);
         
     def draw(self, screen, position, offset, delta_time):
-        x = (position[0] - 1) * settings.TILE_SIZE + offset[0];
-        y = (position[1] - 1) * settings.TILE_SIZE + offset[1];
+        x = (position[0] + 0.5) * settings.TILE_SIZE + offset[0];
+        y = (position[1] + 0.5) * settings.TILE_SIZE + offset[1];
         
-        screen.blit(self.image, (x, y));
+        temp_rect = self.image.get_rect(center = (x, y));
+        screen.blit(self.image, temp_rect);
+        
+class MinerRenderer(Renderer):
+    def __init__(self, miner):
+        self.miner = miner;
+        self.walk = assets['miner.png'][0:6];
+        self.idle = assets['miner.png'][6];
+        self.progress = 0;
+        
+    def draw(self, screen, offset, delta_time):
+        x = self.miner.position[0] + offset[0];
+        y = self.miner.position[1] + offset[1];
+        ang = angle(self.miner.direction, (0, -1));
+        
+        if not self.miner.task.empty() and type(self.miner.task.queue[0]) == commands.Move:
+            self.progress += delta_time * self.miner.modified_speed;
+            image = pygame.transform.scale2x(self.walk[int(len(self.walk) * self.progress) % len(self.walk)]);
+            
+            ang = angle(self.miner.direction, (0, -1));
+            image = pygame.transform.rotate(image, ang);
+            
+            temp_rect = image.get_rect(center = (x, y));
+            screen.blit(image, temp_rect);
+        else:
+            image = pygame.transform.scale2x(self.idle);
+            image = pygame.transform.rotate(image, ang);
+            
+            temp_rect = image.get_rect(center = (x, y));
+            screen.blit(image, temp_rect);

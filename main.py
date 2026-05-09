@@ -250,7 +250,7 @@ def renderer():
         
     elif current_scene == 'play' or 'pause menu' or 'game over':
         tiles.draw_tile(screen, grid, offset, delta_time);
-        # space.draw_space(screen);
+        space.draw_space(screen, offset, delta_time);
         tiles.draw_structure(screen, grid, offset, delta_time);
         tiles.draw_fog(screen, grid, offset);
         
