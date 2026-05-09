@@ -56,9 +56,9 @@ def reload():
     y = min(y, 0);
     offset = (x, y);
     
-    for y in range(len(grid)):
-        for x in range(len(grid[y])):
-            grid[y][x].is_foggy = False;
+    # for y in range(len(grid)):
+    #     for x in range(len(grid[y])):
+    #         grid[y][x].is_foggy = False;
     
     for _ in range(20):
         miner = units.Miner('default', ((space.base_position[0] + 0.5) * settings.TILE_SIZE, (space.base_position[1] + 0.5) * settings.TILE_SIZE));
@@ -116,7 +116,7 @@ def event_handler():
                 
             if ev.type == pygame.KEYDOWN:
                 game_over.text_box.add(ev);
-                if ev.key == pygame.K_RETURN:
+                if ev.key == pygame.K_RETURN and game_over.text_box.current_text != '':
                     data = {
                         'name': game_over.text_box.current_text,
                         'score': time_survived
@@ -193,8 +193,9 @@ def event_handler():
                 last_offset = offset;
             
             if pygame.mouse.get_just_released()[0]:
-                left, top = tiles.pixel_to_tile(drag_pos);
-                right, bottom = tiles.pixel_to_tile(pygame.mouse.get_pos());
+                left, top = tiles.pixel_to_tile((drag_pos[0] - last_offset[0], drag_pos[1] - last_offset[1]));
+                pos = pygame.mouse.get_pos();
+                right, bottom = tiles.pixel_to_tile((pos[0] - offset[0], pos[1] - offset[1]));
                 
                 player_action.add_harvest(left, top, right, bottom);
                 drag_pos = None;
@@ -249,9 +250,9 @@ def renderer():
         
     elif current_scene == 'play' or 'pause menu' or 'game over':
         tiles.draw_tile(screen, grid, offset, delta_time);
-        space.draw_space(screen);
+        # space.draw_space(screen);
         tiles.draw_structure(screen, grid, offset, delta_time);
-        # tiles.draw_fog(screen, grid);
+        tiles.draw_fog(screen, grid, offset);
         
         show_text(screen);
 
@@ -275,8 +276,7 @@ def run(screen):
     global is_running;
     global is_pause;
     global delta_time;
-    current_scene = 'game over';
-    
+
     while is_running:
         
         event_handler();

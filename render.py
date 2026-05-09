@@ -12,12 +12,14 @@ def load_assets():
     assets['font40'] = pygame.font.Font(load.path('asset/font/Minecraft.ttf'), 40);
     assets['font80'] = pygame.font.Font(load.path('asset/font/Minecraft.ttf'), 80);
     assets['font150'] = pygame.font.Font(load.path('asset/font/Minecraft.ttf'), 150);
-    assets['cursor.png'] = (pygame.image.load(load.path('asset/sprites/UI/cursor.png'))).convert_alpha();
+    assets['cursor.png'] = pygame.image.load(load.path('asset/sprites/UI/cursor.png')).convert_alpha();
     assets['grass.png'] = pygame.image.load(load.path('asset/sprites/tiles/grass-block.png')).convert_alpha();
     assets['water.png'] = load_sprite_sheet(pygame.image.load(load.path('asset/sprites/tiles/water.png')).convert_alpha(), 16, 16);
     assets['sand.png'] = pygame.image.load(load.path('asset/sprites/tiles/sand.png')).convert_alpha();
-    assets['tree.png'] = (pygame.image.load(load.path('asset/sprites/structures/tree.png'))).convert_alpha();
+    assets['road.png'] = pygame.image.load(load.path('asset/sprites/tiles/road.png')).convert_alpha();
+    assets['tree.png'] = pygame.image.load(load.path('asset/sprites/structures/tree.png')).convert_alpha();
     assets['stone.png'] = pygame.image.load(load.path('asset/sprites/structures/stone.png')).convert_alpha();
+    assets['spike.png'] = pygame.image.load(load.path('asset/sprites/structures/spike.png')).convert_alpha();
 
 def load_sprite_sheet(sheet: pygame.Surface, width : int, height: int):
     sheet_width, sheet_height = sheet.get_size();
@@ -204,6 +206,7 @@ class CursorRenderer(Renderer):
 class TileRenderer(Renderer):
     def __init__(self, tile):
         self.tile = tile;
+        self.fog = FogRenderer(self.tile);
         self.grass = None;
         self.water = None;
         self.sand = None;
@@ -227,6 +230,23 @@ class TileRenderer(Renderer):
                 self.sand = SandRenderer(self.tile);
             
             self.sand.draw(screen, position, offset, delta_time);
+            
+        elif self.tile.type == 'road':
+            if not self.road:
+                self.road = RoadRenderer(self.tile);
+            
+            self.road.draw(screen, position, offset, delta_time);
+            
+class FogRenderer(Renderer):
+    def __init__(self, tile):
+        self.tile = tile;
+    
+    def draw(self, screen, position, offset):
+        x = position[0] * settings.TILE_SIZE + offset[0];
+        y = position[1] * settings.TILE_SIZE + offset[1];
+        
+        g = pygame.Rect(x, y, settings.TILE_SIZE, settings.TILE_SIZE);
+        pygame.draw.rect(screen, pygame.Color('grey'), g);
         
 class GrassRenderer(Renderer):
     def __init__(self, tile):
@@ -264,6 +284,17 @@ class SandRenderer(Renderer):
         
         screen.blit(self.image,(x, y));
         
+class RoadRenderer(Renderer):
+    def __init__(self, tile):
+        self.tile = tile;
+        self.image = pygame.transform.scale2x(assets['road.png']);
+        
+    def draw(self, screen, position, offset, delta_time):
+        x = position[0] * settings.TILE_SIZE + offset[0];
+        y = position[1] * settings.TILE_SIZE + offset[1];
+        
+        screen.blit(self.image, (x, y));
+        
 class TreeRenderer(Renderer):
     def __init__(self, tree):
         self.tree = tree;
@@ -287,3 +318,13 @@ class StoneRenderer(Renderer):
         
         screen.blit(self.image, (x, y));
         
+class SpikeRenderer(Renderer):
+    def __init__(self, spike):
+        self.spike = spike;
+        self.image = pygame.transform.scale2x(assets['spike.png']);
+        
+    def draw(self, screen, position, offset, delta_time):
+        x = (position[0] - 1) * settings.TILE_SIZE + offset[0];
+        y = (position[1] - 1) * settings.TILE_SIZE + offset[1];
+        
+        screen.blit(self.image, (x, y));

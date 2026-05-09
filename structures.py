@@ -129,6 +129,7 @@ class Spike(Structure):
     def __init__(self):
         super().__init__(200);
         self.damage = 5;
+        self.renderer = render.SpikeRenderer(self);
         
     def take_damage(self, enemy):
         super().take_damage(enemy);
@@ -140,11 +141,6 @@ class Spike(Structure):
         if tile.structure:
             return False;
         return True;
-        
-    def draw(self, screen, position):
-        x, y = position;
-        g = pygame.Rect(x * settings.TILE_SIZE + 1, y * settings.TILE_SIZE + 1, settings.TILE_SIZE - 2, settings.TILE_SIZE - 2);
-        pygame.draw.rect(screen, pygame.Color('brown'), g)
         
 class Crossbow(Structure):
     def __init__(self):
