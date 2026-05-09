@@ -43,7 +43,28 @@ class Button:
         
         self.is_pressed = False;
         return True;
-
+    
+class TextBox:
+    def __init__(self, name, left, top, width, height, text_limit = 15):
+        self.name = name;
+        self.current_text = '';
+        self.text_limit = text_limit;
+        
+        self.top = top;
+        self.left = left;
+        self.width = width;
+        self.height = height;
+        
+        self.renderer = render.TextBoxRenderer(self);
+        
+    def add(self, event):
+        if event.key == pygame.K_BACKSPACE:
+            self.current_text = self.current_text[:-1];
+        elif event.key == pygame.K_RETURN:
+            pass;
+        elif len(self.current_text) < self.text_limit:
+            self.current_text += event.unicode;
+        
 class MainMenu:
     def __init__(self):
         width = 300;
@@ -68,8 +89,11 @@ class GameOverMenu:
     def __init__(self):
         width = 300;
         height = 60;
-        self.restart = Button('Restart', settings.WIDTH // 2 - width // 2, 310, width, height);
-        self.exit = Button('Main Menu', settings.WIDTH // 2 - width // 2, 400, width, height);
+        
+        self.text_box = TextBox('Enter name...', settings.WIDTH // 2 - width // 2, 310, width, height, 20);
+        self.restart = Button('Restart', settings.WIDTH // 2 - width // 2, 400, width, height);
+        self.scoreboard = Button('Scoreboard', settings.WIDTH // 2 - width // 2, 490, width, height);
+        self.exit = Button('Main Menu', settings.WIDTH // 2 - width // 2, 580, width, height);
 
         self.renderer = render.GameOverMenuRenderer(self);
         

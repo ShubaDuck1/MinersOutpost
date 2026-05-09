@@ -57,6 +57,29 @@ class ButtonRenderer(Renderer):
         
         if self.button.is_pressed:
             screen.blit(self.temp_surface, self.g);
+            
+class TextBoxRenderer(Renderer):
+    def __init__(self, box):
+        self.text_box = box;
+        
+        self.g = pygame.Rect(box.left, box.top, box.width, box.height);
+        self.font = assets['font25'];
+        self.text_surface = self.font.render(f"{box.name}", True, pygame.Color('white'));
+        self.text_rect = self.text_surface.get_rect(midleft = (box.left + 10, self.g.center[1] + 2));
+        
+        self.dot_surface = self.font.render(f"...", True, pygame.Color('white'));
+        self.dot_rect = self.dot_surface.get_rect(midleft = self.text_rect.midright);
+        
+    def draw(self, screen):
+        pygame.draw.rect(screen, pygame.Color("#766F6F"), self.g);
+        pygame.draw.rect(screen, pygame.Color("#C6BBBB"), self.g, 5);
+        
+        if self.text_box.current_text != '':
+            text_surface = self.font.render(f"{self.text_box.current_text}", True, pygame.Color('white'));
+            screen.blit(text_surface, self.text_rect);
+            return;
+
+        screen.blit(self.text_surface, self.text_rect);
         
 class MainMenuRenderer(Renderer):
     def __init__(self, main_menu):
@@ -93,8 +116,8 @@ class PauseMenuRenderer(Renderer):
         self.pause_menu.exit.renderer.draw(screen);
     
 class GameOverMenuRenderer(Renderer):
-    def __init__(self, pause_menu):
-        self.pause_menu = pause_menu;
+    def __init__(self, game_over_menu):
+        self.game_over_menu = game_over_menu;
         self.font = assets['font80'];
         
         text_surface = self.font.render(f"Game Over", True, pygame.Color('white'));
@@ -109,8 +132,10 @@ class GameOverMenuRenderer(Renderer):
         
     def draw(self, screen):
         self.draw_background(screen);
-        self.pause_menu.restart.renderer.draw(screen);
-        self.pause_menu.exit.renderer.draw(screen);
+        self.game_over_menu.text_box.renderer.draw(screen);
+        self.game_over_menu.restart.renderer.draw(screen);
+        self.game_over_menu.scoreboard.renderer.draw(screen);
+        self.game_over_menu.exit.renderer.draw(screen);
         
 class ScoreboardRenderer(Renderer):
     def __init__(self, scoreboard):
@@ -146,7 +171,7 @@ class ScoreboardRenderer(Renderer):
             text_rect = text_surface.get_rect(topleft = (10, curr_line));
             board_surface.blit(text_surface, text_rect);
             
-            text_surface = self.font.render(f"{data['score']}", True, pygame.Color('white'));
+            text_surface = self.font.render(f"{int(data['score'] // 60):02d}:{int(data['score'] % 60):02d}", True, pygame.Color('white'));
             text_rect = text_surface.get_rect(topright = (width - 10, curr_line));
             board_surface.blit(text_surface, text_rect);
             

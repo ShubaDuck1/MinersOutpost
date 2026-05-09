@@ -316,7 +316,7 @@ class PlayerAction:
     def update(self):
         tmp = [];
         while not self.task.empty():
-            cnt = self.space.count_not_busy();
+            cnt = min(2, self.space.count_not_busy())
             if not cnt:
                 break;
             

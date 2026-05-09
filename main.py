@@ -9,7 +9,7 @@ import menu;
 import render;
 
 pygame.init()
-
+pygame.key.set_repeat(500, 20);
 screen = pygame.display.set_mode((settings.WIDTH, settings.HEIGHT));
 
 render.load_assets();
@@ -29,10 +29,10 @@ is_pause = False;
 move_camera_pos = None;
 offset = (0, 0);
 last_offset = None;
-settings.FPS = 120;
 
 def reload():
     global time_left;
+    global time_survived;
     global gen;
     global grid;
     global space;
@@ -41,6 +41,7 @@ def reload():
     global offset;
     
     time_left = settings.DAY_TIME;
+    time_survived = 0;
     gen = load.Generator();
     grid = gen.grid;
     space = spaces.Space(grid, gen.base_position);
@@ -113,9 +114,23 @@ def event_handler():
                 reload();
                 current_scene = 'main menu';
                 
+            if ev.type == pygame.KEYDOWN:
+                game_over.text_box.add(ev);
+                if ev.key == pygame.K_RETURN:
+                    data = {
+                        'name': game_over.text_box.current_text,
+                        'score': time_survived
+                    }
+                    scoreboard.add(data);
+                    scoreboard.save_score();
+                    current_scene = 'scoreboard';
+                
         if game_over.restart.check_pressed():
             reload();
             current_scene = 'play';
+        if game_over.scoreboard.check_pressed():
+            reload();
+            current_scene = 'scoreboard';
         if game_over.exit.check_pressed():
             reload();
             current_scene = 'main menu';
@@ -239,9 +254,7 @@ def renderer():
         # tiles.draw_fog(screen, grid);
         
         show_text(screen);
-        
-        
-        
+
         if current_scene == 'pause menu':
             pause_menu.renderer.draw(screen);
         elif current_scene == 'game over':
@@ -257,12 +270,15 @@ def renderer():
 
 def run(screen):
     global time_left;
+    global time_survived;
     global current_scene;
     global is_running;
     global is_pause;
     global delta_time;
+    current_scene = 'game over';
     
     while is_running:
+        
         event_handler();
         delta_time = clock.tick(settings.FPS) / 1000;
 
@@ -280,6 +296,7 @@ def run(screen):
                 player_action.update();
                 time_left -= (delta_time * fast_forward * (not is_pause));
                 
+            time_survived += (delta_time * fast_forward * (not is_pause));
             space.step(delta_time * fast_forward * (not is_pause));
             space.update();
         
