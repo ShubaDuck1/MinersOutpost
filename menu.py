@@ -44,6 +44,11 @@ class Button:
         self.is_pressed = False;
         return True;
     
+class PlayButton(Button):
+    def __init__(self, name, left, top, width, height):
+        super().__init__(name, left, top, width, height);
+        self.renderer = render.PlayButtonRenderer(self);
+    
 class TextBox:
     def __init__(self, name, left, top, width, height, text_limit = 15):
         self.name = name;
@@ -96,6 +101,14 @@ class GameOverMenu:
         self.exit = Button('Main Menu', settings.WIDTH // 2 - width // 2, 580, width, height);
 
         self.renderer = render.GameOverMenuRenderer(self);
+        
+class PlayMenu:
+    def __init__(self):
+        self.slow_down = PlayButton('slow down', settings.WIDTH - 42 * 4, 10, 32, 32);
+        self.default = PlayButton('default', settings.WIDTH - 42 * 3, 10, 32, 32);
+        self.speed_up = PlayButton('speed up', settings.WIDTH - 42 * 2, 10, 32, 32);
+        self.options = PlayButton('options', settings.WIDTH - 42, 10, 32, 32);
+        self.renderer = render.PlayMenuRenderer(self);
         
 class Scoreboard:
     def __init__(self, filename = load.path('asset/scoreboard.pkl')):

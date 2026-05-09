@@ -17,6 +17,7 @@ clock = pygame.Clock();
 main_menu = menu.MainMenu();
 pause_menu = menu.PauseMenu();
 game_over = menu.GameOverMenu();
+play_menu = menu.PlayMenu();
 scoreboard = menu.Scoreboard();
 cursor_renderer = render.CursorRenderer();
 
@@ -73,6 +74,7 @@ def event_handler():
     global move_camera_pos;
     global offset;
     global last_offset;
+    global fast_forward;
     
     if current_scene == 'main menu':
         for ev in pygame.event.get():
@@ -165,6 +167,15 @@ def event_handler():
                 current_mode = 'build spike';
             elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_5:
                 current_mode = 'build crossbow';
+                
+        if play_menu.slow_down.check_pressed():
+            fast_forward = 0.5;
+        if play_menu.default.check_pressed():
+            fast_forward = 1;
+        if play_menu.speed_up.check_pressed():
+            fast_forward = 3;
+        if play_menu.options.check_pressed():
+            current_scene = 'pause menu';
                 
         if pygame.mouse.get_pressed()[2]:
             if move_camera_pos:
@@ -260,10 +271,13 @@ def renderer():
             pause_menu.renderer.draw(screen);
         elif current_scene == 'game over':
             game_over.renderer.draw(screen);
-        elif drag_pos:
-            tiles.draw_drag(screen, drag_pos, last_offset, offset);
         else:
-            tiles.draw_hover(screen, offset);
+            if drag_pos:
+                tiles.draw_drag(screen, drag_pos, last_offset, offset);
+            else:
+                tiles.draw_hover(screen, offset);
+                
+            play_menu.renderer.draw(screen);
     
     cursor_renderer.draw(screen);
     

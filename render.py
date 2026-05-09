@@ -19,6 +19,8 @@ def load_assets():
     assets['font80'] = pygame.font.Font(load.path('asset/font/Minecraft.ttf'), 80);
     assets['font150'] = pygame.font.Font(load.path('asset/font/Minecraft.ttf'), 150);
     assets['cursor.png'] = pygame.image.load(load.path('asset/sprites/UI/cursor.png')).convert_alpha();
+    assets['button_box.png'] = pygame.image.load(load.path('asset/sprites/UI/button_box.png')).convert_alpha();
+    assets['options_icons.png'] = load_sprite_sheet(pygame.image.load(load.path('asset/sprites/UI/options_icons.png')).convert_alpha(), 16, 16);
     assets['grass.png'] = pygame.image.load(load.path('asset/sprites/tiles/grass-block.png')).convert_alpha();
     assets['water.png'] = load_sprite_sheet(pygame.image.load(load.path('asset/sprites/tiles/water.png')).convert_alpha(), 16, 16);
     assets['sand.png'] = pygame.image.load(load.path('asset/sprites/tiles/sand.png')).convert_alpha();
@@ -66,6 +68,28 @@ class ButtonRenderer(Renderer):
         
         if self.button.is_pressed:
             screen.blit(self.temp_surface, self.g);
+            
+class PlayButtonRenderer(Renderer):
+    def __init__(self, play_button):
+        self.play_button = play_button;
+        self.box = pygame.transform.scale2x(assets['button_box.png']);
+        
+        if play_button.name == 'slow down':
+            self.icon = pygame.transform.scale2x(assets['options_icons.png'][0]);
+        elif play_button.name == 'default':
+            self.icon = pygame.transform.scale2x(assets['options_icons.png'][1]);
+        elif play_button.name == 'speed up':
+            self.icon = pygame.transform.scale2x(assets['options_icons.png'][2]);
+        elif play_button.name == 'options':
+            self.icon = pygame.transform.scale2x(assets['options_icons.png'][3]);
+        
+    def draw(self, screen):
+        g = pygame.Rect(self.play_button.left, self.play_button.top, self.play_button.width, self.play_button.height);
+        temp_rect = self.box.get_rect(center = g.center);
+        screen.blit(self.box, temp_rect);
+        
+        temp_rect = self.icon.get_rect(center = g.center);
+        screen.blit(self.icon, temp_rect);
             
 class TextBoxRenderer(Renderer):
     def __init__(self, box):
@@ -145,6 +169,16 @@ class GameOverMenuRenderer(Renderer):
         self.game_over_menu.restart.renderer.draw(screen);
         self.game_over_menu.scoreboard.renderer.draw(screen);
         self.game_over_menu.exit.renderer.draw(screen);
+        
+class PlayMenuRenderer(Renderer):
+    def __init__(self, play_menu):
+        self.play_menu = play_menu;
+        
+    def draw(self, screen):
+        self.play_menu.slow_down.renderer.draw(screen);
+        self.play_menu.default.renderer.draw(screen);
+        self.play_menu.speed_up.renderer.draw(screen);
+        self.play_menu.options.renderer.draw(screen);
         
 class ScoreboardRenderer(Renderer):
     def __init__(self, scoreboard):
@@ -241,6 +275,13 @@ class TileRenderer(Renderer):
         elif self.tile.type == 'road':
             if not self.road:
                 self.road = RoadRenderer(self.tile);
+            
+            if self.grass:
+                self.grass.draw(screen, position, offset, delta_time);
+            elif not self.sand:
+                self.sand = SandRenderer(self.tile);
+            if self.sand:
+                self.sand.draw(screen, position, offset, delta_time);
             
             self.road.draw(screen, position, offset, delta_time);
             
