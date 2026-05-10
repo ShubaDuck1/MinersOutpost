@@ -27,8 +27,11 @@ def load_assets():
     assets['road.png'] = pygame.image.load(load.path('asset/sprites/tiles/road.png')).convert_alpha();
     assets['tree.png'] = pygame.image.load(load.path('asset/sprites/structures/tree.png')).convert_alpha();
     assets['stone.png'] = pygame.image.load(load.path('asset/sprites/structures/stone.png')).convert_alpha();
+    assets['constructor.png'] = pygame.image.load(load.path('asset/sprites/structures/constructor.png')).convert_alpha();
     assets['spike.png'] = pygame.image.load(load.path('asset/sprites/structures/spike.png')).convert_alpha();
     assets['miner.png'] = load_sprite_sheet(pygame.image.load(load.path('asset/sprites/units/blue_ant.png')).convert_alpha(), 48, 48);
+    assets['enemy.png'] = load_sprite_sheet(pygame.image.load(load.path('asset/sprites/units/red_ant.png')).convert_alpha(), 48, 48);
+    
 
 def load_sprite_sheet(sheet: pygame.Surface, width : int, height: int):
     sheet_width, sheet_height = sheet.get_size();
@@ -254,7 +257,10 @@ class TileRenderer(Renderer):
         self.road = None;
         
     def draw(self, screen, position, offset, delta_time):
-        if self.tile.type == 'grass':
+        if self.tile.is_foggy:
+            self.fog.draw(screen, position, offset);
+        
+        elif self.tile.type == 'grass':
             if not self.grass:
                 self.grass = GrassRenderer(self.tile);
             
@@ -338,10 +344,12 @@ class RoadRenderer(Renderer):
         self.image = pygame.transform.scale2x(assets['road.png']);
         
     def draw(self, screen, position, offset, delta_time):
-        x = position[0] * settings.TILE_SIZE + offset[0];
-        y = position[1] * settings.TILE_SIZE + offset[1];
+        x = (position[0] + 0.5) * settings.TILE_SIZE + offset[0];
+        y = (position[1]+ 0.5) * settings.TILE_SIZE + offset[1];
         
-        screen.blit(self.image, (x, y));
+        temp_rect = self.image.get_rect(center = (x, y))
+        
+        screen.blit(self.image, temp_rect);
         
 class TreeRenderer(Renderer):
     def __init__(self, tree):
@@ -366,6 +374,26 @@ class StoneRenderer(Renderer):
         
         screen.blit(self.image, (x, y));
         
+class BaseRenderer(Renderer):
+    def __init__(self, base):
+        self.base = base;
+        
+    def draw(self, screen, position, offset, delta_time):
+        x = (position[0] + 0.5) * settings.TILE_SIZE + offset[0];
+        y = (position[1] + 0.5) * settings.TILE_SIZE + offset[1];
+        pygame.draw.circle(screen, pygame.Color('blue'), (x, y), settings.TILE_SIZE // 2);
+        
+class ConstructorRenderer(Renderer):
+    def __init__(self, constructor):
+        self.constructor = constructor;
+        self.image = pygame.transform.scale2x(assets['constructor.png']);
+        
+    def draw(self, screen, position, offset, delta_time):
+        x = position[0] * settings.TILE_SIZE + offset[0];
+        y = position[1] * settings.TILE_SIZE + offset[1];
+        
+        screen.blit(self.image, (x, y));
+        
 class SpikeRenderer(Renderer):
     def __init__(self, spike):
         self.spike = spike;
@@ -377,30 +405,70 @@ class SpikeRenderer(Renderer):
         
         temp_rect = self.image.get_rect(center = (x, y));
         screen.blit(self.image, temp_rect);
-        
+            
 class MinerRenderer(Renderer):
     def __init__(self, miner):
         self.miner = miner;
-        self.walk = assets['miner.png'][0:6];
-        self.idle = assets['miner.png'][6];
+        self.walk = assets['miner.png'][:6];
+        self.attack = assets['miner.png'][6:];
         self.progress = 0;
+        self.attack_progress = 0;
         
     def draw(self, screen, offset, delta_time):
         x = self.miner.position[0] + offset[0];
         y = self.miner.position[1] + offset[1];
         ang = angle(self.miner.direction, (0, -1));
         
-        if not self.miner.task.empty() and type(self.miner.task.queue[0]) == commands.Move:
-            self.progress += delta_time * self.miner.modified_speed;
-            image = pygame.transform.scale2x(self.walk[int(len(self.walk) * self.progress) % len(self.walk)]);
-            
-            ang = angle(self.miner.direction, (0, -1));
+        if self.miner.task.empty():
+            image = pygame.transform.scale2x(self.attack[0]);
             image = pygame.transform.rotate(image, ang);
             
             temp_rect = image.get_rect(center = (x, y));
             screen.blit(image, temp_rect);
-        else:
-            image = pygame.transform.scale2x(self.idle);
+        elif type(self.miner.task.queue[0]) == commands.Move:
+            self.progress += delta_time * self.miner.modified_speed;
+            image = pygame.transform.scale2x(self.walk[int(len(self.walk) * self.progress) % len(self.walk)]);
+            image = pygame.transform.rotate(image, ang);
+            
+            temp_rect = image.get_rect(center = (x, y));
+            screen.blit(image, temp_rect);
+        elif type(self.miner.task.queue[0]) == commands.Harvest:
+            self.attack_progress += delta_time;
+            image = pygame.transform.scale2x(self.attack[int(len(self.attack) * self.attack_progress) % len(self.attack)]);
+            image = pygame.transform.rotate(image, ang);
+            
+            temp_rect = image.get_rect(center = (x, y));
+            screen.blit(image, temp_rect);
+            
+class EnemyRenderer(Renderer):
+    def __init__(self, enemy):
+        self.enemy = enemy;
+        self.walk = assets['enemy.png'][:6];
+        self.attack = assets['enemy.png'][6:];
+        self.progress = 0;
+        self.attack_progress = 0;
+        
+    def draw(self, screen, offset, delta_time):
+        x = self.enemy.position[0] + offset[0];
+        y = self.enemy.position[1] + offset[1];
+        ang = angle(self.enemy.direction, (0, -1));
+        
+        if self.enemy.task.empty():
+            image = pygame.transform.scale2x(self.attack[0]);
+            image = pygame.transform.rotate(image, ang);
+            
+            temp_rect = image.get_rect(center = (x, y));
+            screen.blit(image, temp_rect);
+        elif type(self.enemy.task.queue[0]) == commands.Move:
+            self.progress += delta_time * self.enemy.modified_speed;
+            image = pygame.transform.scale2x(self.walk[int(len(self.walk) * self.progress) % len(self.walk)]);
+            image = pygame.transform.rotate(image, ang);
+            
+            temp_rect = image.get_rect(center = (x, y));
+            screen.blit(image, temp_rect);
+        elif type(self.enemy.task.queue[0]) == commands.Attack:
+            self.attack_progress += delta_time;
+            image = pygame.transform.scale2x(self.attack[int(len(self.attack) * self.attack_progress) % len(self.attack)]);
             image = pygame.transform.rotate(image, ang);
             
             temp_rect = image.get_rect(center = (x, y));

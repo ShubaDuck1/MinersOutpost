@@ -20,9 +20,6 @@ class Structure:
             
     def can_build(self, tile):
         pass;
-    
-    def draw(self, screen, position):
-        pass;
         
 class Constructor(Structure):
     def __init__(self, structure):
@@ -30,6 +27,7 @@ class Constructor(Structure):
         self.structure = structure;
         self.inventory = self.set_inventory();
         self.is_interactable = True;
+        self.renderer = render.ConstructorRenderer(self);
         
     def set_inventory(self):
         res = [];
@@ -59,11 +57,6 @@ class Constructor(Structure):
             tile.structure = None;
         else:
             tile.structure = self.structure;
-            
-    def draw(self, screen, position):
-        x, y = position;
-        g = pygame.Rect(x * settings.TILE_SIZE + 1, y * settings.TILE_SIZE + 1, settings.TILE_SIZE - 2, settings.TILE_SIZE - 2);
-        pygame.draw.rect(screen, pygame.Color('orange'), g)
     
 class Tree(Structure):
     def __init__(self):
@@ -72,11 +65,6 @@ class Tree(Structure):
         self.is_harvestable = True;
         
         self.renderer = render.TreeRenderer(self);
-        
-    def draw(self, screen, position):
-        x = (position[0] + 0.5) * settings.TILE_SIZE;
-        y = (position[1] + 0.5) * settings.TILE_SIZE;
-        pygame.draw.circle(screen, pygame.Color('darkgreen'), (x, y), settings.TILE_SIZE // 2);
         
     def harvest(self, miner, delta_time):
         self.progress += delta_time;
@@ -97,11 +85,6 @@ class Stone(Structure):
         
         self.renderer = render.StoneRenderer(self);
         
-    def draw(self, screen, position):
-        x = (position[0] + 0.5) * settings.TILE_SIZE;
-        y = (position[1] + 0.5) * settings.TILE_SIZE;
-        pygame.draw.circle(screen, pygame.Color('grey'), (x, y), settings.TILE_SIZE // 2);
-        
     def harvest(self, miner, delta_time):
         self.progress += delta_time;
         
@@ -119,11 +102,7 @@ class Base(Structure):
         self.inventory = [resources.Resource() for _ in range(5)];
         self.vision_range = 10;
         self.is_interactable = True;
-        
-    def draw(self, screen, position, offset):
-        x = (position[0] + 0.5) * settings.TILE_SIZE + offset[0];
-        y = (position[1] + 0.5) * settings.TILE_SIZE + offset[1];
-        pygame.draw.circle(screen, pygame.Color('blue'), (x, y), settings.TILE_SIZE // 2);
+        self.renderer = render.BaseRenderer(self);
     
 class Spike(Structure):
     def __init__(self):

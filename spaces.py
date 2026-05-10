@@ -330,19 +330,73 @@ class Space:
         
         path.reverse();
         return path;
+    
+    def draw_all(self, screen, offset, delta_time):
+        tmp_list = [];
+        
+        for y in range(max(0, -3 - offset[1] // settings.TILE_SIZE), min(settings.TILE_HEIGHT, (settings.HEIGHT - offset[1]) // settings.TILE_SIZE + 3)):
+            for x in range(max(0, -3 - offset[0] // settings.TILE_SIZE), min(settings.TILE_WIDTH, (settings.WIDTH - offset[0]) // settings.TILE_SIZE + 3)):
+                curr_tile = self.grid[y][x];
+                new_x = (x + 0.5) * settings.TILE_SIZE + offset[0];
+                new_y = (y + 0.5) * settings.TILE_SIZE + offset[1]
                 
+                if curr_tile.is_foggy:
+                    tmp_list.append((new_x, new_y, 4, curr_tile, ((x, y), offset, delta_time)));
+                    continue;
+                
+                tmp_list.append((new_x, new_y, 1, curr_tile, ((x, y), offset, delta_time)));
+                
+                if curr_tile.structure:
+                    if type(curr_tile.structure) == structures.Constructor:
+                        tmp_list.append((new_x, new_y, 2, curr_tile.structure, ((x, y), offset, delta_time)));
+                    else:
+                        tmp_list.append((new_x, new_y, 3, curr_tile.structure, ((x, y), offset, delta_time)));
+        
+        for miner in self.space_miners:
+            new_x = miner.position[0] + offset[0];
+            new_y = miner.position[1] + offset[1];
+            
+            if not -3 * settings.TILE_SIZE <= new_x <= settings.WIDTH + 3 * settings.TILE_SIZE:
+                continue;
+            if not -3 * settings.TILE_SIZE <= new_y <= settings.HEIGHT + 3 * settings.TILE_SIZE:
+                continue;
+            
+            if tiles.pixel_to_tile(miner.position) == self.base_position:
+                continue;
+            
+            tmp_list.append((new_x, new_y, 3, miner, (offset, delta_time)));
+            
+        for enemy in self.space_enemies:
+            new_x = enemy.position[0] + offset[0];
+            new_y = enemy.position[1] + offset[1];
+            
+            if not -3 * settings.TILE_SIZE <= new_x <= settings.WIDTH + 3 * settings.TILE_SIZE:
+                continue;
+            if not -3 * settings.TILE_SIZE <= new_y <= settings.HEIGHT + 3 * settings.TILE_SIZE:
+                continue;
+            
+            if tiles.pixel_to_tile(enemy.position) == self.base_position:
+                continue;
+            
+            tmp_list.append((new_x, new_y, 3, enemy, (offset, delta_time)));   
+            
+        tmp_list.sort(key=lambda x: (x[2], x[1]));
+        for obj in tmp_list:
+            obj[3].renderer.draw(screen, *obj[4]);
+            
+        if self.is_night:
+            self.draw_night(screen);
+    
     def draw_space(self, screen: pygame.Surface, offset, delta_time):
         for miner in self.space_miners:
             miner.renderer.draw(screen, offset, delta_time)
             
         # for enemy in self.space_enemies:
         #     pygame.draw.circle(screen, pygame.Color('red'), enemy.position, enemy.radius);
-            
-        # if self.is_night:
-        #     self.draw_night(screen);
         
     def draw_night(self, screen):
         temp_surface = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA);
         temp_surface.fill((0, 0, 0, 100));
         screen.blit(temp_surface, (0, 0));
+        
             

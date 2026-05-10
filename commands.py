@@ -44,15 +44,23 @@ class Move(Command):
             self.is_done = True;
             
 class Attack(Command):
-    def __init__(self, enemy, tile):
+    def __init__(self, enemy, tile, destination):
         super().__init__(enemy);
         self.tile = tile;
         self.progress = 10;
+        self.destination = destination;
     
     def check(self):
         return self.unit.can_go_through(self.tile);
     
     def execute(self, delta_time):
+        dest_x, dest_y = self.destination;
+        dest_x = (dest_x + 0.5) * settings.TILE_SIZE;
+        dest_y = (dest_y + 0.5) * settings.TILE_SIZE;
+        
+        dir_x, dir_y = normalize((dest_x - self.unit.position[0], dest_y - self.unit.position[1]));
+        self.unit.direction = (dir_x, dir_y);
+        
         if self.check():
             self.is_done = True;
             return;

@@ -96,6 +96,7 @@ class Enemy(Unit):
         self.current_health = self.max_health;
         self.damage = 10;
         self.is_destroyed = False;
+        self.renderer = render.EnemyRenderer(self);
         
     def take_damage(self, structure):
         self.current_health -= structure.damage;
@@ -104,9 +105,9 @@ class Enemy(Unit):
         
     def set_attack_base(self, space, path):
         for x, y in path:
-            self.task.put(commands.Attack(self, space.grid[y][x]));
+            self.task.put(commands.Attack(self, space.grid[y][x], (x, y)));
             self.task.put(commands.Move(self, (x, y)));
-        self.task.put(commands.Attack(self, space.grid[space.base_position[1]][space.base_position[0]]));
+        self.task.put(commands.Attack(self, space.grid[space.base_position[1]][space.base_position[0]], space.base_position));
         
     def can_go_through(self, tile):
         if not tile.structure:

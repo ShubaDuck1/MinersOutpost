@@ -23,7 +23,7 @@ cursor_renderer = render.CursorRenderer();
 
 pygame.mouse.set_visible(False);
 current_scene = 'main menu';
-fast_forward = 3;
+fast_forward = 1;
 drag_pos = None;
 is_running = True;
 is_pause = False;
@@ -210,10 +210,11 @@ def event_handler():
                 
                 player_action.add_harvest(left, top, right, bottom);
                 drag_pos = None;
-                    
+            
+        tmp_pos = pygame.mouse.get_pos();
         if current_mode == 'build road':
             if pygame.mouse.get_pressed()[0]:
-                player_action.add_road(tiles.pixel_to_tile(pygame.mouse.get_pos()));
+                player_action.add_road(tiles.pixel_to_tile((tmp_pos[0] - offset[0], tmp_pos[1] - offset[1])));
                 
         if current_mode == 'build bridge':
             if pygame.mouse.get_pressed()[0]:
@@ -260,10 +261,7 @@ def renderer():
         scoreboard.renderer.draw(screen);
         
     elif current_scene == 'play' or 'pause menu' or 'game over':
-        tiles.draw_tile(screen, grid, offset, delta_time);
-        space.draw_space(screen, offset, delta_time);
-        tiles.draw_structure(screen, grid, offset, delta_time);
-        tiles.draw_fog(screen, grid, offset);
+        space.draw_all(screen, offset, delta_time * fast_forward * (not is_pause));
         
         show_text(screen);
 

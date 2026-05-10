@@ -277,7 +277,7 @@ class PlayerAction:
         
     def add_road(self, position):
         curr_tile = self.space.grid[position[1]][position[0]];
-        if curr_tile.structure or not curr_tile.type == 'grass':
+        if curr_tile.structure or curr_tile.type == 'water':
             return;
         
         curr_tile.set_structure(structures.Constructor('road'));
@@ -315,9 +315,10 @@ class PlayerAction:
         
     def update(self):
         tmp = [];
+        j = self.space.count_not_busy();
         while not self.task.empty():
-            cnt = min(2, self.space.count_not_busy())
-            if not cnt:
+            cnt = self.space.count_not_busy();
+            if j - cnt > 2:
                 break;
             
             prio, counter, curr_task = self.task.get();
