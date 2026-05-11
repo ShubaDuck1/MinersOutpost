@@ -11,7 +11,7 @@ class Generator:
         if not seed:
             seed = random.randint(0, 2**31);
         self.seed = seed;
-        self.grid = [[tiles.Tile() for a in range(settings.TILE_WIDTH)] for b in range(settings.TILE_HEIGHT)];
+        self.grid = [[tiles.Tile((a, b)) for a in range(settings.TILE_WIDTH)] for b in range(settings.TILE_HEIGHT)];
         
         self.generate_grid();
         self.generate_base();

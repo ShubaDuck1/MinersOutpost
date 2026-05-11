@@ -57,11 +57,7 @@ def reload():
     y = min(y, 0);
     offset = (x, y);
     
-    # for y in range(len(grid)):
-    #     for x in range(len(grid[y])):
-    #         grid[y][x].is_foggy = False;
-    
-    for _ in range(20):
+    for _ in range(50):
         miner = units.Miner('default', ((space.base_position[0] + 0.5) * settings.TILE_SIZE, (space.base_position[1] + 0.5) * settings.TILE_SIZE));
         space.add(miner);
 
@@ -218,15 +214,15 @@ def event_handler():
                 
         if current_mode == 'build bridge':
             if pygame.mouse.get_pressed()[0]:
-                player_action.add_bridge(tiles.pixel_to_tile(pygame.mouse.get_pos()));
+                player_action.add_bridge(tiles.pixel_to_tile((tmp_pos[0] - offset[0], tmp_pos[1] - offset[1])));
                 
         if current_mode == 'build spike':
             if pygame.mouse.get_pressed()[0]:
-                player_action.add_spike(tiles.pixel_to_tile(pygame.mouse.get_pos()));
+                player_action.add_spike(tiles.pixel_to_tile((tmp_pos[0] - offset[0], tmp_pos[1] - offset[1])));
                 
         if current_mode == 'build crossbow':
             if pygame.mouse.get_pressed()[0]:
-                player_action.add_crossbow(tiles.pixel_to_tile(pygame.mouse.get_pos()));
+                player_action.add_crossbow(tiles.pixel_to_tile((tmp_pos[0] - offset[0], tmp_pos[1] - offset[1])));
             
 
 def show_text(screen):

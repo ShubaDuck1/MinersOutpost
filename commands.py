@@ -47,7 +47,7 @@ class Attack(Command):
     def __init__(self, enemy, tile, destination):
         super().__init__(enemy);
         self.tile = tile;
-        self.progress = 10;
+        self.progress = 0;
         self.destination = destination;
     
     def check(self):
@@ -132,6 +132,7 @@ class GiveResource(Command):
             amount = min(self.unit.inventory.amount, resource.amount);
             if resource.remove(type, amount):
                 self.unit.inventory.remove(type, amount);
+                self.structure.check();
                 break;
         self.is_done = True;
         self.structure.is_occupied = False;

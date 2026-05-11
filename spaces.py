@@ -12,14 +12,19 @@ class Space:
         self.grid = grid;
         self.space_miners = [];
         self.space_enemies = [];
+        self.space_attack_tower = [];
         
         self.base_position = base_position;
         self.base = structures.Base();
-        self.grid[base_position[1]][base_position[0]].structure = self.base;
+        self.grid[base_position[1]][base_position[0]].set_structure(self.base);
         self.day_counter = 0;
         self.is_night = False;
         
         self.update_fog(((base_position[0] + 0.5) * settings.TILE_SIZE, (base_position[1] + 0.5) * settings.TILE_SIZE), self.base.vision_range);
+        
+        for y in range(len(grid)):
+            for x in range(len(grid[y])):
+                grid[y][x].space = self;
     
     def add(self, unit: units.Unit):
         if type(unit) == units.Miner:
@@ -29,30 +34,28 @@ class Space:
         
     def step(self, delta_time):
         for miner in self.space_miners:
+            if not miner.is_busy():
+                continue;
             miner.update(delta_time);
 
         for enemy in self.space_enemies:
+            if not enemy.is_busy():
+                continue;
             enemy.update(delta_time);
+    
+        for curr_structure, x, y in self.space_attack_tower:
+            curr_structure = self.grid[y][x].structure;
+            if not curr_structure or not curr_structure.is_attackable:
+                continue;
             
-        for y in range(len(self.grid)):
-            for x in range(len(self.grid[y])):
-                curr_structure = self.grid[y][x].structure;
-                if not curr_structure or not curr_structure.is_attackable:
-                    continue;
-                
-                if curr_structure.cooldown == 10:
-                    self.update_fog(((x + 0.5) * settings.TILE_SIZE, (y + 0.5) * settings.TILE_SIZE), self.grid[y][x].structure.vision_range);
-                
-                if not curr_structure.ready_to_attack(delta_time):
-                    continue;
-                
-                enemy = self.find_enemy((x, y), curr_structure.vision_range);
-                
-                if not enemy:
-                    continue;
-                
-                curr_structure.attack(enemy);
-        
+            enemy = self.find_enemy((x, y), curr_structure.vision_range);
+            curr_structure.target = enemy;
+            
+            if curr_structure.cooldown == 10:
+                self.update_fog(((x + 0.5) * settings.TILE_SIZE, (y + 0.5) * settings.TILE_SIZE), self.grid[y][x].structure.vision_range);
+            
+            curr_structure.update(delta_time);
+
     def update(self):
         for miner in self.space_miners:
             curr_x, curr_y = tiles.pixel_to_tile(miner.position);
@@ -74,10 +77,6 @@ class Space:
             curr_x, curr_y = tiles.pixel_to_tile(enemy.position);
             curr_tile = self.grid[curr_y][curr_x];
             enemy.modified_speed = enemy.speed * curr_tile.modify_speed();
-            
-        for y in range(len(self.grid)):
-            for x in range(len(self.grid[y])):
-                self.grid[y][x].update();
                 
         if not self.space_enemies and self.is_night:
             self.set_day_time();
@@ -103,7 +102,8 @@ class Space:
             if miner.inventory.amount:
                 miner.set_give_all(self.base);
         
-        enemy_amount = int(5 * pow(1.3, self.day_counter));
+        enemy_amount = int(5 * pow(1.1, self.day_counter));
+        enemy_hp = int(50 * pow(1.1, self.day_counter));
         spawn_tile = [];
         
         visited = [False for _ in range(settings.TILE_WIDTH * settings.TILE_HEIGHT)];
@@ -142,7 +142,12 @@ class Space:
             i = random.randint(0, len(spawn_tile) - 1);
             x, y = spawn_tile[i];
             
-            enemy = units.Enemy(((x + 0.5) * settings.TILE_SIZE, (y + 0.5) * settings.TILE_SIZE));
+            if self.grid[y][x].structure:
+                continue;
+            
+            x = (x + 0.5) * settings.TILE_SIZE;
+            y = (y + 0.5) * settings.TILE_SIZE;
+            enemy = units.Enemy((x, y), enemy_hp);
             self.add(enemy);
             path = self.find_path_enemy(enemy, (x, y), self.base_position);
             enemy.set_attack_base(self, path);
@@ -152,6 +157,8 @@ class Space:
         self.is_night = False;
     
     def find_enemy(self, position, _range):
+        if not self.space_enemies:
+            return;
         x, y = position;
         min_mag = math.inf;
         res_enemy = None;
@@ -165,7 +172,7 @@ class Space:
                 min_mag = mag;
                 res_enemy = enemy;
             
-            return res_enemy;
+        return res_enemy;
     
     def update_fog(self, position, _range):
         curr_x, curr_y = position;
@@ -341,16 +348,19 @@ class Space:
                 new_y = (y + 0.5) * settings.TILE_SIZE + offset[1]
                 
                 if curr_tile.is_foggy:
-                    tmp_list.append((new_x, new_y, 4, curr_tile, ((x, y), offset, delta_time)));
+                    tmp_list.append((new_x, new_y, 5, curr_tile.renderer, ((x, y), offset, delta_time)));
                     continue;
                 
-                tmp_list.append((new_x, new_y, 1, curr_tile, ((x, y), offset, delta_time)));
+                tmp_list.append((new_x, new_y, 1, curr_tile.renderer, ((x, y), offset, delta_time)));
                 
                 if curr_tile.structure:
                     if type(curr_tile.structure) == structures.Constructor:
-                        tmp_list.append((new_x, new_y, 2, curr_tile.structure, ((x, y), offset, delta_time)));
+                        tmp_list.append((new_x, new_y, 2, curr_tile.structure.renderer, ((x, y), offset, delta_time)));
+                    elif type(curr_tile.structure) == structures.Crossbow:
+                        tmp_list.append((new_x, new_y, 3, curr_tile.structure.renderer, ((x, y), offset, delta_time)));
+                        tmp_list.append((new_x, new_y, 4, curr_tile.structure.renderer.tracer, ((x, y), offset, delta_time)));
                     else:
-                        tmp_list.append((new_x, new_y, 3, curr_tile.structure, ((x, y), offset, delta_time)));
+                        tmp_list.append((new_x, new_y, 3, curr_tile.structure.renderer, ((x, y), offset, delta_time)));
         
         for miner in self.space_miners:
             new_x = miner.position[0] + offset[0];
@@ -364,7 +374,7 @@ class Space:
             if tiles.pixel_to_tile(miner.position) == self.base_position:
                 continue;
             
-            tmp_list.append((new_x, new_y, 3, miner, (offset, delta_time)));
+            tmp_list.append((new_x, new_y, 3, miner.renderer, (offset, delta_time)));
             
         for enemy in self.space_enemies:
             new_x = enemy.position[0] + offset[0];
@@ -378,21 +388,14 @@ class Space:
             if tiles.pixel_to_tile(enemy.position) == self.base_position:
                 continue;
             
-            tmp_list.append((new_x, new_y, 3, enemy, (offset, delta_time)));   
+            tmp_list.append((new_x, new_y, 3, enemy.renderer, (offset, delta_time)));   
             
         tmp_list.sort(key=lambda x: (x[2], x[1]));
         for obj in tmp_list:
-            obj[3].renderer.draw(screen, *obj[4]);
+            obj[3].draw(screen, *obj[4]);
             
         if self.is_night:
             self.draw_night(screen);
-    
-    def draw_space(self, screen: pygame.Surface, offset, delta_time):
-        for miner in self.space_miners:
-            miner.renderer.draw(screen, offset, delta_time)
-            
-        # for enemy in self.space_enemies:
-        #     pygame.draw.circle(screen, pygame.Color('red'), enemy.position, enemy.radius);
         
     def draw_night(self, screen):
         temp_surface = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA);

@@ -29,6 +29,7 @@ def load_assets():
     assets['stone.png'] = pygame.image.load(load.path('asset/sprites/structures/stone.png')).convert_alpha();
     assets['constructor.png'] = pygame.image.load(load.path('asset/sprites/structures/constructor.png')).convert_alpha();
     assets['spike.png'] = pygame.image.load(load.path('asset/sprites/structures/spike.png')).convert_alpha();
+    assets['crossbow.png'] = load_sprite_sheet(pygame.image.load(load.path('asset/sprites/structures/crossbow.png')).convert_alpha(), 48, 48);
     assets['miner.png'] = load_sprite_sheet(pygame.image.load(load.path('asset/sprites/units/blue_ant.png')).convert_alpha(), 48, 48);
     assets['enemy.png'] = load_sprite_sheet(pygame.image.load(load.path('asset/sprites/units/red_ant.png')).convert_alpha(), 48, 48);
     
@@ -61,7 +62,7 @@ class ButtonRenderer(Renderer):
         self.text_surface = font.render(f"{self.button.name}", True, pygame.Color('white'));
         self.text_rect = self.text_surface.get_rect(center = (self.g.center[0], self.g.center[1] + 2));
     
-        self.temp_surface = pygame.Surface((button.width, button.height), pygame.SRCALPHA);
+        self.temp_surface = pygame.Surface((button.width, button.height), pygame.SRCALPHA).convert_alpha();
         self.temp_surface.fill((0, 0, 0, 25));
     
     def draw(self, screen):
@@ -139,7 +140,7 @@ class PauseMenuRenderer(Renderer):
     def __init__(self, pause_menu):
         self.pause_menu = pause_menu;
         
-        self.temp_surface = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA);
+        self.temp_surface = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA).convert_alpha();
         self.temp_surface.fill((0, 0, 0, 100));
         
     def draw_background(self, screen):
@@ -159,7 +160,7 @@ class GameOverMenuRenderer(Renderer):
         text_surface = self.font.render(f"Game Over", True, pygame.Color('white'));
         text_rect = text_surface.get_rect(center = (settings.WIDTH // 2, 200));
         
-        self.temp_surface = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA);
+        self.temp_surface = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA).convert_alpha();
         self.temp_surface.fill((0, 0, 0, 100));
         self.temp_surface.blit(text_surface, text_rect);
         
@@ -209,7 +210,7 @@ class ScoreboardRenderer(Renderer):
         self.start_line = min(self.start_line, 5);
         curr_line = self.start_line;
         
-        board_surface = pygame.Surface((width, height), pygame.SRCALPHA);
+        board_surface = pygame.Surface((width, height), pygame.SRCALPHA).convert_alpha();
         board_rect = board_surface.get_rect(center = (settings.WIDTH // 2, settings.HEIGHT // 2));
         
         for data in self.scoreboard.scores:
@@ -226,14 +227,14 @@ class ScoreboardRenderer(Renderer):
                 break;
                 
         for i in range(10):
-            temp_surface = pygame.Surface((width, 1), pygame.SRCALPHA);
+            temp_surface = pygame.Surface((width, 1), pygame.SRCALPHA).convert_alpha();
             temp_surface.fill((0, 0, 0, 100 - i * 10));
             board_surface.blit(temp_surface, (0, height - i));
         
         board_surface.blit(text_surface, text_rect);
                 
         for i in range(10):
-            temp_surface = pygame.Surface((width, 1), pygame.SRCALPHA);
+            temp_surface = pygame.Surface((width, 1), pygame.SRCALPHA).convert_alpha();
             temp_surface.fill((0, 0, 0, 100 - i * 10));
             board_surface.blit(temp_surface, (0, i));
 
@@ -392,6 +393,8 @@ class ConstructorRenderer(Renderer):
         x = position[0] * settings.TILE_SIZE + offset[0];
         y = position[1] * settings.TILE_SIZE + offset[1];
         
+        if self.constructor.structure == 'bridge':
+            return;
         screen.blit(self.image, (x, y));
         
 class SpikeRenderer(Renderer):
@@ -405,6 +408,54 @@ class SpikeRenderer(Renderer):
         
         temp_rect = self.image.get_rect(center = (x, y));
         screen.blit(self.image, temp_rect);
+        
+class CrossbowRenderer(Renderer):
+    def __init__(self, crossbow):
+        self.crossbow = crossbow;
+        self.image = assets['crossbow.png'];
+        self.direction = (0, -1);
+        self.tracer = TraceRenderer(crossbow);
+    
+    def draw(self, screen, position, offset, delta_time):
+        x = (position[0] + 0.5) * settings.TILE_SIZE + offset[0];
+        y = (position[1] + 0.5) * settings.TILE_SIZE + offset[1];
+        progress = min(0.99, self.crossbow.cooldown);
+        
+        ang = angle(self.direction, (0, -1));
+        if(self.crossbow.target):
+            tar_x = self.crossbow.target.position[0] + offset[0];
+            tar_y = self.crossbow.target.position[1] + offset[1];
+            self.direction = (tar_x - x, tar_y - y);
+        
+        image = pygame.transform.scale2x(self.image[int(len(self.image) * progress)]);
+        image = pygame.transform.rotate(image, ang);
+        
+        temp_rect = image.get_rect(center = (x, y));
+        screen.blit(image, temp_rect); 
+            
+class TraceRenderer(Renderer):
+    def __init__(self, crossbow):
+        self.crossbow = crossbow;
+        self.tar_x = None;
+        
+        self.range = (crossbow.vision_range + 0.5) * settings.TILE_SIZE;
+        self.temp_surface = pygame.Surface((self.range * 2, self.range * 2), pygame.SRCALPHA).convert_alpha();
+
+    def draw(self, screen, position, offset, delta_time):
+        x = (position[0] + 0.5) * settings.TILE_SIZE + offset[0];
+        y = (position[1] + 0.5) * settings.TILE_SIZE + offset[1];
+        progress = min(0.99, self.crossbow.cooldown);
+        
+        alpha = max(0, 200 - 300 * progress);
+        if progress == 0:
+            self.tar_x = self.crossbow.target.position[0] + offset[0];
+            self.tar_y = self.crossbow.target.position[1] + offset[1];
+            
+        if self.tar_x and alpha:
+            
+            
+            pygame.draw.line(self.temp_surface, (255, 255, 255, alpha), (self.range, self.range), (self.tar_x - x + self.range, self.tar_y - y + self.range), 4);
+            screen.blit(self.temp_surface, (x - self.range, y - self.range));
             
 class MinerRenderer(Renderer):
     def __init__(self, miner):
@@ -439,6 +490,12 @@ class MinerRenderer(Renderer):
             
             temp_rect = image.get_rect(center = (x, y));
             screen.blit(image, temp_rect);
+        else:
+            image = pygame.transform.scale2x(self.attack[0]);
+            image = pygame.transform.rotate(image, ang);
+            
+            temp_rect = image.get_rect(center = (x, y));
+            screen.blit(image, temp_rect);
             
 class EnemyRenderer(Renderer):
     def __init__(self, enemy):
@@ -446,7 +503,6 @@ class EnemyRenderer(Renderer):
         self.walk = assets['enemy.png'][:6];
         self.attack = assets['enemy.png'][6:];
         self.progress = 0;
-        self.attack_progress = 0;
         
     def draw(self, screen, offset, delta_time):
         x = self.enemy.position[0] + offset[0];
@@ -467,8 +523,8 @@ class EnemyRenderer(Renderer):
             temp_rect = image.get_rect(center = (x, y));
             screen.blit(image, temp_rect);
         elif type(self.enemy.task.queue[0]) == commands.Attack:
-            self.attack_progress += delta_time;
-            image = pygame.transform.scale2x(self.attack[int(len(self.attack) * self.attack_progress) % len(self.attack)]);
+            progress = min(0.99, self.enemy.task.queue[0].progress);
+            image = pygame.transform.scale2x(self.attack[int(len(self.attack) * progress)]);
             image = pygame.transform.rotate(image, ang);
             
             temp_rect = image.get_rect(center = (x, y));

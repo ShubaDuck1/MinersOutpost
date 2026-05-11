@@ -1,7 +1,6 @@
-import pygame;
-import settings;
 import resources;
 import render;
+from commands import normalize;
 
 class Structure:
     def __init__(self, max_health):
@@ -12,11 +11,15 @@ class Structure:
         self.is_harvestable = False;
         self.is_attackable = False;
         self.is_occupied = False;
+        self.tile = None;
         
     def take_damage(self, enemy):
         self.current_health -= enemy.damage;
         if self.current_health <= 0:
             self.is_destroyed = True;
+            
+            if self.tile.structure:
+                self.tile.remove_structure();
             
     def can_build(self, tile):
         pass;
@@ -48,19 +51,21 @@ class Constructor(Structure):
     def check(self):
         for resource in self.inventory:
             if resource.amount != 0:
-                return False;
-        return True;
+                return;
+        
+        self.update(self.tile);
         
     def update(self, tile):
         if self.structure == 'road' or self.structure == 'bridge':
             tile.type = 'road';
             tile.structure = None;
         else:
-            tile.structure = self.structure;
+            tile.remove_structure();
+            tile.set_structure(self.structure);
     
 class Tree(Structure):
     def __init__(self):
-        super().__init__(50);
+        super().__init__(20);
         self.progress = 0;
         self.is_harvestable = True;
         
@@ -76,6 +81,7 @@ class Tree(Structure):
         
         if self.current_health <= 0:
             self.is_destroyed = True;
+            self.tile.remove_structure();
             
 class Stone(Structure):
     def __init__(self):
@@ -95,6 +101,7 @@ class Stone(Structure):
         
         if self.current_health <= 0:
             self.is_destroyed = True;
+            self.tile.remove_structure();
 
 class Base(Structure):
     def __init__(self):
@@ -128,29 +135,27 @@ class Crossbow(Structure):
         self.cooldown = 10;
         self.vision_range = 6;
         self.damage = 20;
+        self.renderer = render.CrossbowRenderer(self);
+        self.target = None;
         
     def can_build(self, tile):
-        if tile.structure:
+        if tile.type == 'water':
             return False;
-        if not tile.type == 'grass':
+        if tile.structure:
             return False;
         return True;
         
     def attack(self, enemy):
-        self.cooldown = 0;
         enemy.take_damage(self);
-        
-    def ready_to_attack(self, delta_time):
+    
+    def update(self, delta_time):
+        if self.cooldown == 10:
+            self.cooldown = 0;
+            
         self.cooldown += delta_time;
         
-        return self.cooldown >= 1;
+        if self.cooldown >= 1 and self.target:
+            self.cooldown = 0;
+            self.attack(self.target);
+            
         
-    def draw(self, screen, position):
-        radius = (self.vision_range + 0.5) * settings.TILE_SIZE;
-        temp_surface = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
-        
-        x = (position[0] + 0.5) * settings.TILE_SIZE;
-        y = (position[1] + 0.5) * settings.TILE_SIZE;
-        pygame.draw.circle(screen, pygame.Color('purple'), (x, y), settings.TILE_SIZE // 2);
-        pygame.draw.circle(temp_surface, (255, 0, 0, 50), (radius, radius), radius);
-        screen.blit(temp_surface, (x - radius, y - radius))

@@ -11,7 +11,7 @@ class Unit:
         self.position = position;
         self.radius = radius;
         self.task = queue.Queue();
-        self.direction = (0, 1);
+        self.direction = (0, -1);
         
     def is_busy(self):
         return not self.task.empty();
@@ -90,9 +90,9 @@ class Miner(Unit):
             return False;
     
 class Enemy(Unit):
-    def __init__(self, position):
+    def __init__(self, position, max_health):
         super().__init__(1, position, 5);
-        self.max_health = 30;
+        self.max_health = max_health;
         self.current_health = self.max_health;
         self.damage = 10;
         self.is_destroyed = False;

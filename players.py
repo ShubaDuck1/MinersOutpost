@@ -315,10 +315,10 @@ class PlayerAction:
         
     def update(self):
         tmp = [];
-        j = self.space.count_not_busy();
+        last = self.space.count_not_busy();
         while not self.task.empty():
             cnt = self.space.count_not_busy();
-            if j - cnt > 2:
+            if not cnt or last - cnt > 2:
                 break;
             
             prio, counter, curr_task = self.task.get();
