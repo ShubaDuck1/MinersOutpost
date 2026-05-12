@@ -144,3 +144,12 @@ class Scoreboard:
                 self.scores = pickle.load(f);
         except:
             return;
+        
+class Clock:
+    def __init__(self):
+        self.left = 1130;
+        self.top = 50;
+        self.renderer = render.ClockRenderer(self);
+        self.is_night = False;
+        self.day_counter = 0;
+        self.current_time = 0;

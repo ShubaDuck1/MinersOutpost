@@ -1,7 +1,6 @@
 import pygame;
 import load;
 import settings;
-import random;
 import commands;
 import pygame;
 
@@ -21,6 +20,8 @@ def load_assets():
     assets['cursor.png'] = pygame.image.load(load.path('asset/sprites/UI/cursor.png')).convert_alpha();
     assets['button_box.png'] = pygame.image.load(load.path('asset/sprites/UI/button_box.png')).convert_alpha();
     assets['options_icons.png'] = load_sprite_sheet(pygame.image.load(load.path('asset/sprites/UI/options_icons.png')).convert_alpha(), 16, 16);
+    assets['clock.png'] = pygame.image.load(load.path('asset/sprites/UI/clock.png')).convert_alpha();
+    assets['clock_hand.png'] = pygame.image.load(load.path('asset/sprites/UI/clock_hand.png')).convert_alpha();
     assets['fog.png'] = pygame.image.load(load.path('asset/sprites/tiles/fog.png')).convert_alpha();
     assets['grass.png'] = pygame.image.load(load.path('asset/sprites/tiles/grass-block.png')).convert_alpha();
     assets['water.png'] = load_sprite_sheet(pygame.image.load(load.path('asset/sprites/tiles/water.png')).convert_alpha(), 16, 16);
@@ -241,6 +242,42 @@ class ScoreboardRenderer(Renderer):
 
 
         screen.blit(board_surface, board_rect);
+        
+class ClockRenderer(Renderer):
+    def __init__(self, clock):
+        self.clock = clock;
+        
+        self.image = pygame.transform.scale_by(assets['clock.png'], 4);
+        self.clock_hand = pygame.transform.scale_by(assets['clock_hand.png'], 3);
+        self.font = assets['font18'];
+        
+    def draw(self, screen):
+        x = self.clock.left;
+        y = self.clock.top;
+        
+        if self.clock.is_night:
+            s = f'Night {self.clock.day_counter}';
+        else:
+            s = f'Day {self.clock.day_counter}';
+            
+        self.text_surface = self.font.render(s, True, pygame.Color('black'));
+        text_rect = self.text_surface.get_rect(center = (x + self.image.width / 2, y + 88));
+        screen.blit(self.image, (x, y));
+        screen.blit(self.text_surface, text_rect);
+        
+        self.text_surface.set_alpha(50);
+        screen.blit(self.text_surface, (text_rect.left - 2, text_rect.top + 2));
+        
+        ang = -90 + 180 * self.clock.current_time / (3 * 60);
+        
+        pivot = (x + self.image.width // 2, y + self.image.height // 2);
+        offset = pygame.math.Vector2(0, -3 * 5);
+        image = pygame.transform.rotozoom(self.clock_hand, ang, 1);
+        rotoff = offset.rotate(-ang);
+        
+        new_rect = image.get_rect(center = pivot + rotoff);
+        
+        screen.blit(image, new_rect);
         
 class CursorRenderer(Renderer):
     def __init__(self):
@@ -491,6 +528,7 @@ class TraceRenderer(Renderer):
             self.tar_y = self.crossbow.target.position[1] + offset[1];
             
         if self.tar_x and alpha:
+            self.temp_surface.fill((0, 0, 0, 0));
             pygame.draw.line(self.temp_surface, (255, 255, 255, alpha), (self.range, self.range), (self.tar_x - x + self.range, self.tar_y - y + self.range), 4);
             screen.blit(self.temp_surface, (x - self.range, y - self.range));
             

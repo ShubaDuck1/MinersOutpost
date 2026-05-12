@@ -20,6 +20,7 @@ game_over = menu.GameOverMenu();
 play_menu = menu.PlayMenu();
 scoreboard = menu.Scoreboard();
 cursor_renderer = render.CursorRenderer();
+play_clock = menu.Clock();
 
 pygame.mouse.set_visible(False);
 current_scene = 'main menu';
@@ -229,24 +230,17 @@ def show_text(screen):
     global time_left;
     font = render.assets['font18'];
     fps_text = font.render(f"FPS: {clock.get_fps():.2f}", True, pygame.Color("white"));
-    screen.blit(fps_text, (5, 5));
-    
-    if space.is_night:
-        mode_text = font.render(f"Night {space.day_counter}", True, pygame.Color("white"));
-        screen.blit(mode_text, (5, 25));
-    else:
-        mode_text = font.render(f"Day {space.day_counter}, time left: {int(time_left // 60):02d}:{int(time_left % 60):02d}", True, pygame.Color("white"));
-        screen.blit(mode_text, (5, 25));
+    screen.blit(fps_text, (10, 10));
     
     mode_text = font.render(f"Current mode: {current_mode}", True, pygame.Color("white"));
-    screen.blit(mode_text, (5, 45));
+    screen.blit(mode_text, (10, 45));
     
     for i in range(3):
         tmp = space.base.inventory[i];
         if not tmp.type:
             break;
         res_text = font.render(f"{tmp.type}: {tmp.amount}", True, pygame.Color("white"));
-        screen.blit(res_text, (5, 65 + 20 * i));
+        screen.blit(res_text, (10, 65 + 20 * i));
         
 def renderer():
     screen.fill(pygame.Color('black'));
@@ -258,7 +252,7 @@ def renderer():
         
     elif current_scene == 'play' or 'pause menu' or 'game over':
         space.draw_all(screen, offset, delta_time * fast_forward * (not is_pause));
-        
+        play_clock.renderer.draw(screen);
         show_text(screen);
 
         if current_scene == 'pause menu':
@@ -303,6 +297,10 @@ def run(screen):
             if not space.is_night:
                 player_action.update();
                 time_left -= (delta_time * fast_forward * (not is_pause));
+                play_clock.current_time = time_left;
+                
+            play_clock.is_night = space.is_night;
+            play_clock.day_counter = space.day_counter;
                 
             time_survived += (delta_time * fast_forward * (not is_pause));
             space.step(delta_time * fast_forward * (not is_pause));
