@@ -21,6 +21,7 @@ def load_assets():
     assets['cursor.png'] = pygame.image.load(load.path('asset/sprites/UI/cursor.png')).convert_alpha();
     assets['button_box.png'] = pygame.image.load(load.path('asset/sprites/UI/button_box.png')).convert_alpha();
     assets['options_icons.png'] = load_sprite_sheet(pygame.image.load(load.path('asset/sprites/UI/options_icons.png')).convert_alpha(), 16, 16);
+    assets['fog.png'] = pygame.image.load(load.path('asset/sprites/tiles/fog.png')).convert_alpha();
     assets['grass.png'] = pygame.image.load(load.path('asset/sprites/tiles/grass-block.png')).convert_alpha();
     assets['water.png'] = load_sprite_sheet(pygame.image.load(load.path('asset/sprites/tiles/water.png')).convert_alpha(), 16, 16);
     assets['sand.png'] = pygame.image.load(load.path('asset/sprites/tiles/sand.png')).convert_alpha();
@@ -292,14 +293,24 @@ class TileRenderer(Renderer):
 class FogRenderer(Renderer):
     def __init__(self, tile):
         self.tile = tile;
-        self.temp_surface = pygame.Surface((settings.TILE_SIZE, settings.TILE_SIZE)).convert();
-        self.temp_surface.fill(pygame.Color('grey'));
+        self.image = pygame.transform.scale2x(assets['fog.png']);
+        self.progress = 0;
     
-    def draw(self, screen, position, offset):
-        x = position[0] * settings.TILE_SIZE + offset[0];
-        y = position[1] * settings.TILE_SIZE + offset[1];
+    def draw(self, screen, position, offset, delta_time):
+        if not self.tile.is_foggy:
+            self.progress += delta_time;
         
-        screen.blit(self.temp_surface, (x, y));
+            alpha = 255 - 255 * self.progress;
+            self.image.set_alpha(alpha);
+        
+            if not alpha:
+                return;
+        
+        x = (position[0] + 0.5) * settings.TILE_SIZE + offset[0];
+        y = (position[1] + 0.5) * settings.TILE_SIZE + offset[1] - 20 * self.progress;
+        temp_rect = self.image.get_rect(center = (x, y));
+        
+        screen.blit(self.image, temp_rect);
         
 class GrassRenderer(Renderer):
     def __init__(self, tile):
@@ -316,14 +327,12 @@ class WaterRenderer(Renderer):
     def __init__(self, tile):
         self.tile = tile;
         self.image = assets['water.png'];
-        self.progress = 0;
         
     def draw(self, screen, position, offset, delta_time):
         x = position[0] * settings.TILE_SIZE + offset[0];
         y = position[1] * settings.TILE_SIZE + offset[1];
         
-        self.progress += delta_time;
-        image = pygame.transform.scale2x(self.image[int(len(self.image) * self.progress) % len(self.image)]);
+        image = pygame.transform.scale2x(self.image[int(len(self.image) * delta_time) % len(self.image)]);
         screen.blit(image, (x, y));
         
 class SandRenderer(Renderer):
@@ -488,6 +497,9 @@ class TraceRenderer(Renderer):
 class MinerRenderer(Renderer):
     def __init__(self, miner):
         self.miner = miner;
+        self.resource_ping = ResourcePing(miner);
+        self.give_resource_ping = GiveResourcePing(miner);
+        
         self.walk = assets['miner.png'][:6];
         self.attack = assets['miner.png'][6:];
         self.progress = 0;
@@ -524,6 +536,60 @@ class MinerRenderer(Renderer):
             
             temp_rect = image.get_rect(center = (x, y));
             screen.blit(image, temp_rect);
+            
+class ResourcePing(Renderer):
+    def __init__(self, miner):
+        self.miner = miner;
+        self.font = assets['font18'];
+        self.progress = 10;
+        
+    def draw(self, screen, offset, delta_time):
+        if self.miner.just_get_resource:
+            tmp_res = self.miner.just_get_resource;
+            self.text_surface = self.font.render(f'+{tmp_res.amount} {tmp_res.type}', True, pygame.Color('white'));
+            self.miner.just_get_resource = None;
+            self.progress = 0;
+        
+        self.progress += delta_time;
+        alpha = max(0, 255 - 255 * self.progress / 2);
+        
+        if not alpha:
+            return;
+        
+        x = self.miner.position[0] + offset[0];
+        y = self.miner.position[1] + offset[1] - 20 * self.progress;
+        
+        self.text_surface.set_alpha(alpha);
+        temp_rect = self.text_surface.get_rect(center = (x, y));
+        self.miner.just_get_resource = None;
+        screen.blit(self.text_surface, temp_rect);
+        
+class GiveResourcePing(Renderer):
+    def __init__(self, miner):
+        self.miner = miner;
+        self.font = assets['font18'];
+        self.progress = 10;
+        
+    def draw(self, screen, position, offset, delta_time):
+        if not self.miner.task.empty() and type(self.miner.task.queue[0]) == commands.GiveAll:
+            tmp_res = self.miner.inventory;
+            self.text_surface = self.font.render(f'+{tmp_res.amount} {tmp_res.type}', True, pygame.Color('white'));
+            self.miner.just_get_resource = None;
+            self.progress = 0;
+            
+        alpha = max(0, 255 - 255 * self.progress / 2);
+        self.progress += delta_time;
+        
+        if not alpha:
+            return;
+        
+        x = (position[0] + 0.5) * settings.TILE_SIZE + offset[0];
+        y = (position[1] + 0.5) * settings.TILE_SIZE + offset[1] - 20 * self.progress;
+        
+        self.text_surface.set_alpha(alpha);
+        temp_rect = self.text_surface.get_rect(center = (x, y));
+        self.miner.just_get_resource = None;
+        screen.blit(self.text_surface, temp_rect);
             
 class EnemyRenderer(Renderer):
     def __init__(self, enemy):

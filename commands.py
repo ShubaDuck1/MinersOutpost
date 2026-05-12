@@ -84,7 +84,9 @@ class Harvest(Command):
         dir_x, dir_y = normalize((dest_x - self.unit.position[0], dest_y - self.unit.position[1]));
         self.unit.direction = (dir_x, dir_y);
         
-        self.structure.harvest(self.unit, delta_time);
+        tmp = self.structure.harvest(self.unit, delta_time);
+        if tmp:
+            self.unit.just_get_resource = tmp;
         
         if self.structure.is_destroyed or self.unit.is_full():
             self.is_done = True;
@@ -132,7 +134,6 @@ class GiveResource(Command):
             amount = min(self.unit.inventory.amount, resource.amount);
             if resource.remove(type, amount):
                 self.unit.inventory.remove(type, amount);
-                self.structure.check();
                 break;
         self.is_done = True;
         self.structure.is_occupied = False;

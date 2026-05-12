@@ -43,7 +43,7 @@ def reload():
     
     time_left = settings.DAY_TIME;
     time_survived = 0;
-    gen = load.Generator();
+    gen = load.Generator(69696969);
     grid = gen.grid;
     space = spaces.Space(grid, gen.base_position);
     player_action = players.PlayerAction(space);
@@ -57,7 +57,7 @@ def reload():
     y = min(y, 0);
     offset = (x, y);
     
-    for _ in range(50):
+    for _ in range(20):
         miner = units.Miner('default', ((space.base_position[0] + 0.5) * settings.TILE_SIZE, (space.base_position[1] + 0.5) * settings.TILE_SIZE));
         space.add(miner);
 

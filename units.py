@@ -49,6 +49,7 @@ class Miner(Unit):
         self.type = type;
         self.vision_range = 3;
         self.inventory = resources.Resource();
+        self.just_get_resource = None;
         self.full = 5;
         self.renderer = render.MinerRenderer(self);
         

@@ -13,6 +13,7 @@ class Space:
         self.space_miners = [];
         self.space_enemies = [];
         self.space_attack_tower = [];
+        self.water_time = 0;
         
         self.base_position = base_position;
         self.base = structures.Base();
@@ -338,6 +339,7 @@ class Space:
     
     def draw_all(self, screen, offset, delta_time):
         tmp_list = [];
+        self.water_time += delta_time;
         
         for y in range(max(0, -3 - offset[1] // settings.TILE_SIZE), min(settings.TILE_HEIGHT, (settings.HEIGHT - offset[1]) // settings.TILE_SIZE + 3)):
             for x in range(max(0, -3 - offset[0] // settings.TILE_SIZE), min(settings.TILE_WIDTH, (settings.WIDTH - offset[0]) // settings.TILE_SIZE + 3)):
@@ -345,11 +347,11 @@ class Space:
                 new_x = (x + 0.5) * settings.TILE_SIZE + offset[0];
                 new_y = (y + 0.5) * settings.TILE_SIZE + offset[1]
                 
+                tmp_list.append((new_x, new_y, 5, curr_tile.renderer.fog, ((x, y), offset, delta_time)));
                 if curr_tile.is_foggy:
-                    tmp_list.append((new_x, new_y, 5, curr_tile.renderer.fog, ((x, y), offset)));
                     continue;
                 
-                tmp_list.append((new_x, new_y, 1, curr_tile.renderer, ((x, y), offset, delta_time)));
+                tmp_list.append((new_x, new_y, 1, curr_tile.renderer, ((x, y), offset, self.water_time)));
                 
                 if curr_tile.structure:
                     if type(curr_tile.structure) == structures.Constructor:
@@ -376,6 +378,8 @@ class Space:
                 continue;
             
             tmp_list.append((new_x, new_y, 3, miner.renderer, (offset, delta_time)));
+            tmp_list.append((new_x, new_y, 4, miner.renderer.resource_ping, (offset, delta_time)));
+            tmp_list.append((new_x, new_y, 4, miner.renderer.give_resource_ping, (self.base_position, offset, delta_time)));
             
         for enemy in self.space_enemies:
             new_x = enemy.position[0] + offset[0];
@@ -403,5 +407,3 @@ class Space:
         temp_surface = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA);
         temp_surface.fill((0, 0, 0, 100));
         screen.blit(temp_surface, (0, 0));
-        
-            

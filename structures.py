@@ -51,17 +51,18 @@ class Constructor(Structure):
     def check(self):
         for resource in self.inventory:
             if resource.amount != 0:
-                return;
+                return False;
         
-        self.update(self.tile);
+        self.update();
+        return True;
         
-    def update(self, tile):
+    def update(self):
         if self.structure == 'road' or self.structure == 'bridge':
-            tile.type = 'road';
-            tile.structure = None;
+            self.tile.type = 'road';
+            self.tile.structure = None;
         else:
-            tile.remove_structure();
-            tile.set_structure(self.structure);
+            self.tile.remove_structure();
+            self.tile.set_structure(self.structure);
     
 class Tree(Structure):
     def __init__(self):
@@ -78,6 +79,7 @@ class Tree(Structure):
             self.progress = 0;
             self.current_health -= 1;
             miner.inventory.add('wood');
+            return resources.Resource('wood', 1);
         
         if self.current_health <= 0:
             self.is_destroyed = True;
@@ -98,6 +100,7 @@ class Stone(Structure):
             self.progress = 0;
             self.current_health -= 1;
             miner.inventory.add('stone');
+            return resources.Resource('stone', 1);
         
         if self.current_health <= 0:
             self.is_destroyed = True;
