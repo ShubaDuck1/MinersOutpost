@@ -26,13 +26,13 @@ def load_assets():
     assets['sand.png'] = pygame.image.load(load.path('asset/sprites/tiles/sand.png')).convert_alpha();
     assets['road.png'] = pygame.image.load(load.path('asset/sprites/tiles/road.png')).convert_alpha();
     assets['tree.png'] = pygame.image.load(load.path('asset/sprites/structures/tree.png')).convert_alpha();
+    assets['base.png'] = pygame.image.load(load.path('asset/sprites/structures/base.png')).convert_alpha();
     assets['stone.png'] = pygame.image.load(load.path('asset/sprites/structures/stone.png')).convert_alpha();
     assets['constructor.png'] = pygame.image.load(load.path('asset/sprites/structures/constructor.png')).convert_alpha();
     assets['spike.png'] = pygame.image.load(load.path('asset/sprites/structures/spike.png')).convert_alpha();
     assets['crossbow.png'] = load_sprite_sheet(pygame.image.load(load.path('asset/sprites/structures/crossbow.png')).convert_alpha(), 48, 48);
     assets['miner.png'] = load_sprite_sheet(pygame.image.load(load.path('asset/sprites/units/blue_ant.png')).convert_alpha(), 48, 48);
     assets['enemy.png'] = load_sprite_sheet(pygame.image.load(load.path('asset/sprites/units/red_ant.png')).convert_alpha(), 48, 48);
-    
 
 def load_sprite_sheet(sheet: pygame.Surface, width : int, height: int):
     sheet_width, sheet_height = sheet.get_size();
@@ -258,10 +258,7 @@ class TileRenderer(Renderer):
         self.road = None;
         
     def draw(self, screen, position, offset, delta_time):
-        if self.tile.is_foggy:
-            self.fog.draw(screen, position, offset);
-        
-        elif self.tile.type == 'grass':
+        if self.tile.type == 'grass':
             if not self.grass:
                 self.grass = GrassRenderer(self.tile);
             
@@ -295,13 +292,14 @@ class TileRenderer(Renderer):
 class FogRenderer(Renderer):
     def __init__(self, tile):
         self.tile = tile;
+        self.temp_surface = pygame.Surface((settings.TILE_SIZE, settings.TILE_SIZE)).convert();
+        self.temp_surface.fill(pygame.Color('grey'));
     
     def draw(self, screen, position, offset):
         x = position[0] * settings.TILE_SIZE + offset[0];
         y = position[1] * settings.TILE_SIZE + offset[1];
         
-        g = pygame.Rect(x, y, settings.TILE_SIZE, settings.TILE_SIZE);
-        pygame.draw.rect(screen, pygame.Color('grey'), g);
+        screen.blit(self.temp_surface, (x, y));
         
 class GrassRenderer(Renderer):
     def __init__(self, tile):
@@ -318,13 +316,13 @@ class WaterRenderer(Renderer):
     def __init__(self, tile):
         self.tile = tile;
         self.image = assets['water.png'];
-        self.progress = random.random();
+        self.progress = 0;
         
     def draw(self, screen, position, offset, delta_time):
         x = position[0] * settings.TILE_SIZE + offset[0];
         y = position[1] * settings.TILE_SIZE + offset[1];
         
-        self.progress += delta_time * random.random();
+        self.progress += delta_time;
         image = pygame.transform.scale2x(self.image[int(len(self.image) * self.progress) % len(self.image)]);
         screen.blit(image, (x, y));
         
@@ -378,11 +376,38 @@ class StoneRenderer(Renderer):
 class BaseRenderer(Renderer):
     def __init__(self, base):
         self.base = base;
+        self.image = pygame.transform.scale2x(assets['base.png']);
+        self.health = HealthRenderer(base, 40, 4);
         
     def draw(self, screen, position, offset, delta_time):
         x = (position[0] + 0.5) * settings.TILE_SIZE + offset[0];
         y = (position[1] + 0.5) * settings.TILE_SIZE + offset[1];
-        pygame.draw.circle(screen, pygame.Color('blue'), (x, y), settings.TILE_SIZE // 2);
+        
+        temp_rect = self.image.get_rect(center = (x, y));
+        screen.blit(self.image, temp_rect);
+        
+class HealthRenderer(Renderer):
+    def __init__(self, base, width, height):
+        self.base = base;
+        self.width = width;
+        self.height = height;
+        self.back = pygame.Surface((width, height)).convert();
+        self.g = pygame.Rect(0, 0, width, height);
+        
+    def draw(self, screen, position, offset, delta_time):
+        if self.base.current_health == self.base.max_health:
+            return;
+        
+        x = (position[0] + 0.5) * settings.TILE_SIZE + offset[0];
+        y = (position[1] - 0.3) * settings.TILE_SIZE + offset[1];
+        
+        self.back.fill(pygame.Color('red'));
+        temp_rect = self.back.get_rect(center = (x, y));
+        
+        self.g.width = self.width * self.base.current_health / self.base.max_health;
+        pygame.draw.rect(self.back, pygame.Color('green'), self.g);
+        
+        screen.blit(self.back, temp_rect);
         
 class ConstructorRenderer(Renderer):
     def __init__(self, constructor):
@@ -412,22 +437,27 @@ class SpikeRenderer(Renderer):
 class CrossbowRenderer(Renderer):
     def __init__(self, crossbow):
         self.crossbow = crossbow;
-        self.image = assets['crossbow.png'];
+        self.head = assets['crossbow.png'][:6];
+        self.foot = pygame.transform.scale2x(assets['crossbow.png'][-1]);
         self.direction = (0, -1);
         self.tracer = TraceRenderer(crossbow);
     
     def draw(self, screen, position, offset, delta_time):
         x = (position[0] + 0.5) * settings.TILE_SIZE + offset[0];
         y = (position[1] + 0.5) * settings.TILE_SIZE + offset[1];
-        progress = min(0.99, self.crossbow.cooldown);
         
+        temp_rect = self.foot.get_rect(center = (x, y));
+        screen.blit(self.foot, temp_rect);
+        
+        progress = min(0.99, self.crossbow.cooldown);
         ang = angle(self.direction, (0, -1));
+        
         if(self.crossbow.target):
             tar_x = self.crossbow.target.position[0] + offset[0];
             tar_y = self.crossbow.target.position[1] + offset[1];
             self.direction = (tar_x - x, tar_y - y);
         
-        image = pygame.transform.scale2x(self.image[int(len(self.image) * progress)]);
+        image = pygame.transform.scale2x(self.head[int(len(self.head) * progress)]);
         image = pygame.transform.rotate(image, ang);
         
         temp_rect = image.get_rect(center = (x, y));
@@ -452,8 +482,6 @@ class TraceRenderer(Renderer):
             self.tar_y = self.crossbow.target.position[1] + offset[1];
             
         if self.tar_x and alpha:
-            
-            
             pygame.draw.line(self.temp_surface, (255, 255, 255, alpha), (self.range, self.range), (self.tar_x - x + self.range, self.tar_y - y + self.range), 4);
             screen.blit(self.temp_surface, (x - self.range, y - self.range));
             
@@ -502,12 +530,15 @@ class EnemyRenderer(Renderer):
         self.enemy = enemy;
         self.walk = assets['enemy.png'][:6];
         self.attack = assets['enemy.png'][6:];
+        self.health = EnemyHealthRenderer(enemy, 20, 4)
+        
         self.progress = 0;
         
     def draw(self, screen, offset, delta_time):
         x = self.enemy.position[0] + offset[0];
         y = self.enemy.position[1] + offset[1];
         ang = angle(self.enemy.direction, (0, -1));
+        
         
         if self.enemy.task.empty():
             image = pygame.transform.scale2x(self.attack[0]);
@@ -529,3 +560,26 @@ class EnemyRenderer(Renderer):
             
             temp_rect = image.get_rect(center = (x, y));
             screen.blit(image, temp_rect);
+            
+class EnemyHealthRenderer(Renderer):
+    def __init__(self, enemy, width, height):
+        self.enemy = enemy;
+        self.width = width;
+        self.height = height;
+        self.back = pygame.Surface((width, height)).convert();
+        self.g = pygame.Rect(0, 0, width, height);
+        
+    def draw(self, screen, offset, delta_time):
+        if self.enemy.current_health == self.enemy.max_health:
+            return;
+        
+        x = self.enemy.position[0] + offset[0];
+        y = self.enemy.position[1] - 0.8 * settings.TILE_SIZE + offset[1];
+        
+        self.back.fill(pygame.Color('red'));
+        temp_rect = self.back.get_rect(center = (x, y));
+        
+        self.g.width = self.width * self.enemy.current_health / self.enemy.max_health;
+        pygame.draw.rect(self.back, pygame.Color('green'), self.g);
+        
+        screen.blit(self.back, temp_rect);

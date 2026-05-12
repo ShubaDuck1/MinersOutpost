@@ -41,9 +41,9 @@ class Constructor(Structure):
             res.append(resources.Resource('wood', 10));
             res.append(resources.Resource('stone', 10));
         elif type(self.structure) == Spike:
-            res.append(resources.Resource('wood', 10));
+            res.append(resources.Resource('wood', 15));
         elif type(self.structure) == Crossbow:
-            res.append(resources.Resource('wood', 20));
+            res.append(resources.Resource('wood', 30));
             res.append(resources.Resource('stone', 10));
         
         return res;

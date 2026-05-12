@@ -144,10 +144,8 @@ class Space:
             
             if self.grid[y][x].structure:
                 continue;
-            
-            x = (x + 0.5) * settings.TILE_SIZE;
-            y = (y + 0.5) * settings.TILE_SIZE;
-            enemy = units.Enemy((x, y), enemy_hp);
+
+            enemy = units.Enemy(((x + 0.5) * settings.TILE_SIZE, (y + 0.5) * settings.TILE_SIZE), enemy_hp);
             self.add(enemy);
             path = self.find_path_enemy(enemy, (x, y), self.base_position);
             enemy.set_attack_base(self, path);
@@ -348,7 +346,7 @@ class Space:
                 new_y = (y + 0.5) * settings.TILE_SIZE + offset[1]
                 
                 if curr_tile.is_foggy:
-                    tmp_list.append((new_x, new_y, 5, curr_tile.renderer, ((x, y), offset, delta_time)));
+                    tmp_list.append((new_x, new_y, 5, curr_tile.renderer.fog, ((x, y), offset)));
                     continue;
                 
                 tmp_list.append((new_x, new_y, 1, curr_tile.renderer, ((x, y), offset, delta_time)));
@@ -359,6 +357,9 @@ class Space:
                     elif type(curr_tile.structure) == structures.Crossbow:
                         tmp_list.append((new_x, new_y, 3, curr_tile.structure.renderer, ((x, y), offset, delta_time)));
                         tmp_list.append((new_x, new_y, 4, curr_tile.structure.renderer.tracer, ((x, y), offset, delta_time)));
+                    elif type(curr_tile.structure) == structures.Base:
+                        tmp_list.append((new_x, new_y, 3, curr_tile.structure.renderer, ((x, y), offset, delta_time)));
+                        tmp_list.append((new_x, new_y, 4, curr_tile.structure.renderer.health, ((x, y), offset, delta_time)));
                     else:
                         tmp_list.append((new_x, new_y, 3, curr_tile.structure.renderer, ((x, y), offset, delta_time)));
         
@@ -388,7 +389,8 @@ class Space:
             if tiles.pixel_to_tile(enemy.position) == self.base_position:
                 continue;
             
-            tmp_list.append((new_x, new_y, 3, enemy.renderer, (offset, delta_time)));   
+            tmp_list.append((new_x, new_y, 3, enemy.renderer, (offset, delta_time)));  
+            tmp_list.append((new_x, new_y, 4, enemy.renderer.health, (offset, delta_time)));  
             
         tmp_list.sort(key=lambda x: (x[2], x[1]));
         for obj in tmp_list:
