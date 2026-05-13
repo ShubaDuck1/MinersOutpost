@@ -7,6 +7,16 @@ from pathlib import Path;
 from perlin_numpy import generate_perlin_noise_2d
 
 class Generator:
+    '''
+    Lớp sinh ra bản đồ trò chơi.
+    
+    Dùng seed giống nhau sẽ sinh ra được các bản đồ giống nhau.
+    
+    Attributes:
+        seed (int): hạt giống để sinh bản đồ.
+        grid (list[list[Tile]]): mảng 2 chiều chứa các ô trò chơi.
+    '''
+    
     def __init__(self, seed = None):
         if not seed:
             seed = random.randint(0, 2**31);
@@ -18,6 +28,14 @@ class Generator:
         self.generate_resource();
     
     def generate_grid(self):
+        '''
+        Hàm sinh bản đồ.
+        
+        Hàm sẽ sinh thẳng trên grid của đối tượng này.
+        
+        Khi cần lấy bản đồ chỉ cần lấy giá trị grid.
+        '''
+        
         if self.seed:
             np.random.seed(self.seed);
         
@@ -36,6 +54,10 @@ class Generator:
                     self.grid[y][x].type = 'sand';
                     
     def generate_resource(self):
+        '''
+        Hàm sinh tài nguyên vào bản đồ.
+        '''
+        
         seed = self.seed;
         if seed:
             random.seed(seed);
@@ -73,6 +95,10 @@ class Generator:
                 self.grid[y][x].set_structure(structures.Stone());
                 
     def generate_base(self):
+        '''
+        Hàm sinh vị trí của tổ kiến và lưu vào base_position của đối tượng này.
+        '''
+        
         if self.seed:
             random.seed(self.seed);
 
@@ -85,6 +111,16 @@ class Generator:
         self.base_position = (x, y);
         
 def path(filename):
+    '''
+    Hàm để tính đường dẫn đến file dựa trên thư mục trò chơi.
+    
+    Args:
+        filename (string): đường dẫn đến từ thư mục trò chơi.
+        
+    Returns:
+        Path: đường dẫn tính được.
+    '''
+    
     tmp = Path(__file__).resolve().parent;
     res = tmp / filename;
     return res;

@@ -5,11 +5,26 @@ import commands;
 import pygame;
 
 def angle(v1, v2):
+    '''
+    Hàm tính góc giữ 2 vector.
+    
+    Args:
+        v1 (tuple[int, int]): vector thứ 1.
+        v2 (tuple[int, int]): vector thứ 2.
+        
+    Returns:
+        float: góc tính được.
+    '''
+    
     tmp = pygame.math.Vector2(v1);
     return tmp.angle_to(v2);
 
 assets = {};
 def load_assets():
+    '''
+    Hàm để tải đồ họa trò chơi vào assets.
+    '''
+    
     global assets;
     
     assets['font18'] = pygame.font.Font(load.path('asset/font/Minecraft.ttf'), 18);
@@ -37,6 +52,18 @@ def load_assets():
     assets['enemy.png'] = load_sprite_sheet(pygame.image.load(load.path('asset/sprites/units/red_ant.png')).convert_alpha(), 48, 48);
 
 def load_sprite_sheet(sheet: pygame.Surface, width : int, height: int):
+    '''
+    Hàm để cắt một sprite sheet ra thành danh sách các hình.
+    
+    Args:
+        sheet (Surface): bề mặt của pygame chứa sprite cần cắt.
+        width (int): chiều dài cần cắt.
+        height (int): chiều cao cần cắt.
+    
+    Returns:
+        list(Surface): danh sách chứa các hình sao khi được cắt.
+    '''
+    
     sheet_width, sheet_height = sheet.get_size();
     res = []
     
@@ -49,6 +76,14 @@ def load_sprite_sheet(sheet: pygame.Surface, width : int, height: int):
     return res;
 
 class Renderer:
+    '''
+    Lớp này là mẫu để cài đặt đồ hoạt cho các đối tượng.
+    
+    Bên dưới lớp này là các lớp được kế thừa từ nó dùng để xử lí đồ họa cho các đối tượng trò chơi.
+    
+    Các lớp này đều sẽ cần có hàm ``__init__`` và hàm ``draw``. Nếu không có chương trình sẽ báo lỗi.
+    '''
+    
     def __init__(self):
         raise NotImplementedError();
     
@@ -125,7 +160,7 @@ class MainMenuRenderer(Renderer):
         self.main_menu = main_menu;
         
         font = assets['font150'];
-        self.text_surface = font.render(f"Minecraft", True, pygame.Color('white'));
+        self.text_surface = font.render(f"Ants defense", True, pygame.Color('white'));
         self.text_rect = self.text_surface.get_rect(center = (settings.WIDTH // 2, 220));
         
     def draw_background(self, screen):

@@ -5,13 +5,36 @@ import queue;
 import settings;
 
 class PlayerCommand:
+    '''
+    Lớp mẫu để cài đặt mệnh lệnh được người chơi đưa ra và giao nhiệm vụ cho đàn kiến.
+    
+    Attributes:
+        is_done (bool): giá trị boolean thể hiện nhiệm vụ được hoàn thành.
+    '''
+    
     def __init__(self):
         self.is_done = False;
     
     def execute(self):
+        '''
+        Hàm thực hiện lệnh.
+        '''
+        
         raise NotImplementedError("execute() Not Implemented");
     
 class Harvest(PlayerCommand):
+    '''
+    Mệnh lệnh thu hoạch.
+    
+    Mệnh lệnh này sẽ điều kiển đàn kiến đi thu hoạch trong một khoảng ô vuông trong các giá trị ``left``, ``top``, ``right``, ``bottom``.
+    
+    Attributes:
+        left (int): tọa độ bên trái ô vuông.
+        top (int): tọa độ bên trên ô vuông.
+        right (int): tọa độ bên phải ô vuông.
+        bottom (int): tọa độ bên dưới ô vuông.
+    '''
+    
     def __init__(self, left, top, right, bottom):
         super().__init__();
         if top > bottom:
@@ -26,6 +49,21 @@ class Harvest(PlayerCommand):
         self.right = right;
         
     def find_path_harvest(self, space):
+        '''
+        Hàm tìm đường đi đến vùng cần thu hoạch.
+        
+        Args:
+            space (Space): không gian trò chơi.
+            
+        Returns:
+            None: nếu không tìm thấy.
+            
+            curr_miner (Miner): đối tượng kiến tìm được. 
+            path (list[tuple[int, int]]): danh sách các tọa độ đường đi.
+            new_x (int): tọa độ x của địa điểm đến.
+            new_y (int): tọa độ y của địa điểm đến.
+        '''
+        
         found_path = False;
         visited = [None for _ in range(settings.TILE_WIDTH * settings.TILE_HEIGHT)];
         path = [];
@@ -114,6 +152,13 @@ class Harvest(PlayerCommand):
         return True;
         
     def execute(self, space):
+        '''
+        Hàm thực hiện mệnh lệnh.
+        
+        Args:
+            space (Space): không gian trò chơi.
+        '''
+        
         if self.check(space):
             return;
         
@@ -129,12 +174,33 @@ class Harvest(PlayerCommand):
         miner.set_harvest(curr_task, (dest_x, dest_y));
 
 class Build(PlayerCommand):
+    '''
+    Lệnh xây dựng thành.
+    
+    Attributes:
+        position (tuple[int, int]): vị trí.
+        structure (Constuctor): công trình xây dựng thành.
+    '''
+    
     def __init__(self, position, structure):
         super().__init__();
         self.position = position;
         self.structure = structure;
         
     def get_resource(self, space):
+        '''
+        Hàm tính toàn tài nguyên cần lấy từ tổ.
+        
+        Args:
+            space (Space): không gian trò chơi.
+            
+        Returns:
+            None: Nếu không có:
+            
+            type (string): loại tài nguyên.
+            amount (int): số lượng tài nguyên.
+        '''
+        
         type = None;
         amount = 0;
         
@@ -155,6 +221,20 @@ class Build(PlayerCommand):
         return None, 0;
         
     def find_path(self, space, base_position):
+        '''
+        Hàm tìm đường đi về tổ.
+        
+        Args:
+            space (Space): không gian trò chơi.
+            base_position (tuple[int, int]): vị trí của tổ.
+            
+        Returns:
+            None: nếu không tìm thấy.
+            
+            curr_miner (Miner): đối tượng kiến.
+            path (list[tuple[int, int]]): danh sách tọa độ đường đi.
+        '''
+        
         found_path = False;
         visited = [None for _ in range(settings.TILE_WIDTH * settings.TILE_HEIGHT)];
         path = [];
@@ -230,6 +310,13 @@ class Build(PlayerCommand):
         return curr_miner, path;
         
     def execute(self, space):
+        '''
+        Hàm chạy lệnh.
+        
+        Args:
+            space (Space): không gian trò chơi.
+        '''
+        
         curr_x, curr_y = self.position;
         curr_task = space.grid[curr_y][curr_x].structure;
         
@@ -260,22 +347,46 @@ class Build(PlayerCommand):
         miner.set_path(path);
         miner.set_give_resource(curr_task);
         curr_task.is_occupied = True;
-        
-class Explore(PlayerCommand):
-    def execute(self):
-        return super().execute()
 
 class PlayerAction:
+    '''
+    Lớp xử lí các lệnh được người chơi đưa ra.
+    
+    Lớp này được dùng để xử lí các đối tượng ``PlayerCommand``.
+    
+    Attributes:
+        task (PriorityQueue): hàng đợi ưu tiên chứa các lệnh thực hiện.
+        space (Space): không gian trò chơi.
+        counter (int): giá trị đếm số lượng lệnh hiện tại. Dùng để đánh dấu lệnh nào được đưa ra trước.
+    '''
+    
     def __init__(self, space):
         self.task = queue.PriorityQueue();
         self.space = space;
         self.counter = 0;
     
     def add_harvest(self, top, left, bottom, right):
+        '''
+        Hàm thêm lệnh thu hoạch
+        
+        Args:
+            left (int): tọa độ bên trái ô vuông.
+            top (int): tọa độ bên trên ô vuông.
+            right (int): tọa độ bên phải ô vuông.
+            bottom (int): tọa độ bên dưới ô vuông.
+        '''
+        
         self.task.put((2, self.counter, Harvest(top, left, bottom, right)));
         self.counter += 1;
         
     def add_road(self, position):
+        '''
+        Hàm thêm lệnh xây đường đi.
+        
+        Args:
+            position (tuple[int, int]): vị trí cần xây.
+        '''
+        
         curr_tile = self.space.grid[position[1]][position[0]];
         if curr_tile.structure or curr_tile.type == 'water':
             return;
@@ -285,6 +396,13 @@ class PlayerAction:
         self.counter += 1;
         
     def add_bridge(self, position):
+        '''
+        Hàm thêm lệnh xây cầu.
+        
+        Args:
+            position (tuple[int, int]): vị trí cần xây.
+        '''
+        
         curr_tile = self.space.grid[position[1]][position[0]];
         if curr_tile.structure or not curr_tile.type == 'water':
             return;
@@ -294,6 +412,13 @@ class PlayerAction:
         self.counter += 1;
         
     def add_spike(self, position):
+        '''
+        Hàm thêm lệnh xây cọc gỗ.
+        
+        Args:
+            position (tuple[int, int]): vị trí cần xây.
+        '''
+        
         curr_tile = self.space.grid[position[1]][position[0]];
         struc = structures.Spike();
         if not struc.can_build(curr_tile):
@@ -304,6 +429,13 @@ class PlayerAction:
         self.counter += 1;
         
     def add_crossbow(self, position):
+        '''
+        Hàm thêm lệnh xây nỏ.
+        
+        Args:
+            position (tuple[int, int]): vị trí cần xây.
+        '''
+        
         curr_tile = self.space.grid[position[1]][position[0]];
         struc = structures.Crossbow();
         if not struc.can_build(curr_tile):
@@ -314,6 +446,10 @@ class PlayerAction:
         self.counter += 1;
         
     def update(self):
+        '''
+        Hàm cập nhật vào thực hiện lệnh trong hàng đợi ưu tiên.
+        '''
+        
         tmp = [];
         last = self.space.count_not_busy();
         while not self.task.empty():

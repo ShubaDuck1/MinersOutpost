@@ -33,6 +33,12 @@ offset = (0, 0);
 last_offset = None;
 
 def reload():
+    '''
+    Khởi tạo các đối tượng cần thiết cho trò chơi. 
+    
+    Hàm này cũng có thể dùng để reset trò chơi.
+    '''
+    
     global time_left;
     global time_survived;
     global gen;
@@ -44,7 +50,7 @@ def reload():
     
     time_left = settings.DAY_TIME;
     time_survived = 0;
-    gen = load.Generator(69696969);
+    gen = load.Generator();
     grid = gen.grid;
     space = spaces.Space(grid, gen.base_position);
     player_action = players.PlayerAction(space);
@@ -63,6 +69,10 @@ def reload():
         space.add(miner);
 
 def event_handler():
+    '''
+    Hàm này sẽ xử lí các sự kiện của pygame, các input từ chuột và bàn phím để chuyển trạng thái.
+    '''
+    
     global is_running;
     global current_mode;
     global current_scene;
@@ -227,6 +237,11 @@ def event_handler():
             
 
 def show_text(screen):
+    '''
+    Hàm này sẽ viết một vài thông tin lên màn hình. (FPS và chế độ hiện tại)
+    
+    '''
+    
     global time_left;
     font = render.assets['font18'];
     fps_text = font.render(f"FPS: {clock.get_fps():.2f}", True, pygame.Color("white"));
@@ -243,6 +258,10 @@ def show_text(screen):
         screen.blit(res_text, (10, 65 + 20 * i));
         
 def renderer():
+    '''
+    Hàm xử lí đồ họa cho trò chơi.
+    '''
+    
     screen.fill(pygame.Color('black'));
     if current_scene == 'main menu':
         main_menu.renderer.draw(screen);
@@ -272,6 +291,12 @@ def renderer():
     pygame.display.flip();
 
 def run(screen):
+    '''
+    Hàm chạy vòng lặp chính của trò chơi. 
+    
+    Mình sẽ gọi hàm này để chạy trò chơi.
+    '''
+    
     global time_left;
     global time_survived;
     global current_scene;

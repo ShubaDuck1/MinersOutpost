@@ -8,7 +8,26 @@ import settings;
 import random;
 
 class Space:
-    def __init__(self, grid, base_position):
+    '''
+    Lớp không gian trò chơi.
+    
+    Lớp này chứa dữ liệu của lưới bản đồ, các thành tấn công, kiến đồng mình và kiến kẻ địch
+    
+    Lớp này hoạt động như một lớp trung gian điều kiển các đối tượng trò chơi tương tác với nhau.
+    Attributes:
+        grid (list[list[Tile]]): Bản đồ trò chơi.
+        space_miners (list[Miner]): danh sách chứa kiến đồng minh.
+        space_enemies (list[Enemy]): danh sách chứa kiến kẻ địch.
+        space_attack_tower (list[structure]): danh sách chứa các thành tấn công.
+        water_time (float): đây là một giá trị để điều kiển chuyển động của nước.
+        
+        base_position (tuple[int, int]): vị trí của tổ.
+        base (Base): đối tượng tổ kiến.
+        day_counter (int): số đếm ngày đã trôi qua.
+        is_night (bool): trạng thái ngày/đêm của trò chơi.
+    '''
+    
+    def __init__(self, grid : list[list[tiles.Tile]], base_position):
         self.grid = grid;
         self.space_miners = [];
         self.space_enemies = [];
@@ -28,12 +47,26 @@ class Space:
                 grid[y][x].space = self;
     
     def add(self, unit: units.Unit):
+        '''
+        Thêm kiến đồng minh hoặc kiến kẻ địch vào không gian.
+        
+        Args:
+            unit (Unit);
+        '''
+        
         if type(unit) == units.Miner:
             self.space_miners.append(unit);
         elif type(unit) == units.Enemy:
             self.space_enemies.append(unit);
         
     def step(self, delta_time):
+        '''
+        Di chuyển các đối tượng trong không gian thêm một bước theo delta_time.
+        
+        Args:
+            delta_time (float): delta time.
+        '''
+        
         for miner in self.space_miners:
             if not miner.is_busy():
                 continue;
@@ -58,6 +91,10 @@ class Space:
             curr_structure.update(delta_time);
 
     def update(self):
+        '''
+        Cập nhật trạng thái của các đối tượng trong không gian.
+        '''
+        
         for miner in self.space_miners:
             curr_x, curr_y = tiles.pixel_to_tile(miner.position);
             curr_tile = self.grid[curr_y][curr_x];
@@ -83,6 +120,13 @@ class Space:
             self.set_day_time();
         
     def count_not_busy(self):
+        '''
+        Đếm số lượng kiến đồng minh đang có nhiệm vụ đang xử lí.
+        
+        Returns:
+            int: số lượng đếm được.
+        '''
+        
         cnt = 0;
         for miner in self.space_miners:
             if not miner.is_busy():
@@ -91,6 +135,10 @@ class Space:
         return cnt;
     
     def set_night_time(self):
+        '''
+        Đặt thời gian thành trời tối.
+        '''
+        
         self.is_night = True;
         for miner in self.space_miners:
             miner.clear_task();
@@ -152,10 +200,27 @@ class Space:
             enemy.set_attack_base(self, path);
         
     def set_day_time(self):
+        '''
+        Đặt thời gian thành trời sáng.
+        '''
+        
         self.day_counter += 1;
         self.is_night = False;
     
     def find_enemy(self, position, _range):
+        '''
+        Tìm kiếm kẻ địch trong một khoảng hình tròn.
+        
+        Args:
+            position (tuple[int, int]): vị trí.
+            _range (int): bán kính của hình tròn để kiểm tra.
+            
+        Returns:
+            None: nếu không tìm thấy.
+            
+            Enemy: kẻ địch tìm được.
+        '''
+        
         if not self.space_enemies:
             return;
         x, y = position;
@@ -174,6 +239,14 @@ class Space:
         return res_enemy;
     
     def update_fog(self, position, _range):
+        '''
+        Cập nhật trạng thái sương mù trong một khoảng hình tròn.
+        
+        Args:
+            position (tuple[int, int]): vị trí.
+            _range (int): bán kính hình tròn.
+        '''
+        
         curr_x, curr_y = position;
         tmp_x, tmp_y = tiles.pixel_to_tile(position);
         
@@ -192,6 +265,20 @@ class Space:
                     self.grid[y][x].is_foggy = False;
                         
     def find_path(self, miner, position, destination):
+        '''
+        Tìm đường đi từ một vị trí đến vị trí khác của kiến đồng minh.
+        
+        Args:
+            miner (Miner): đối tượng kiến đồng minh.
+            position (tuple[int, int]): điểm khởi đầu.
+            destination (tuple[int, int]): điểm đến.
+            
+        Returns:
+            None: nếu không tìm được đường.
+            
+            list[tuple[int, int]]: danh sách tọa độ điểm trên đường.
+        '''
+        
         curr_tile = self.grid[destination[1]][destination[0]];
         if curr_tile.structure and not curr_tile.structure.is_interactable:
             return None;
@@ -263,6 +350,21 @@ class Space:
         return path;
     
     def find_path_enemy(self, enemy, position, destination):
+        '''
+        Tìm kiếm đường đi từ một điểm đến một điểm cho kiến kẻ địch.
+        
+        Args:
+            enemy (Enemy): đối tượng kiến kẻ địch.
+            position (tuple[int, int]): điểm khởi đầu.
+            destination (tuple[int, int]): điểm đến.
+            
+        Returns:
+            None: nếu không tìm được đường.
+            
+            list[tuple[int, int]]: danh sách tọa độ điểm trên đường.
+            
+        '''
+        
         curr_tile = self.grid[destination[1]][destination[0]];
         if not curr_tile.structure.is_interactable:
             return None;
@@ -338,6 +440,15 @@ class Space:
         return path;
     
     def draw_all(self, screen, offset, delta_time):
+        '''
+        Vẽ toàn bộ đối tượng trong không gian.
+        
+        Args:
+            screen (Surface): màn hình để vẽ lên.
+            offset (tuple[int, int]): khoảng dịch đi của camera.
+            delta_time (float): delta time.
+        '''
+        
         tmp_list = [];
         self.water_time += delta_time;
         
@@ -404,6 +515,13 @@ class Space:
             self.draw_night(screen);
         
     def draw_night(self, screen):
+        '''
+        Vẽ trời tối.
+        
+        Args:
+            screen (Surface): màn hình cần vẽ.
+        '''
+        
         temp_surface = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA);
         temp_surface.fill((0, 0, 0, 100));
         screen.blit(temp_surface, (0, 0));

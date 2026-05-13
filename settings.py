@@ -1,3 +1,7 @@
+'''
+file lưu các giá trị cài đặt của trò chơi.
+'''
+
 WIDTH, HEIGHT = 1280, 720;
 FPS = 120;
 DAY_TIME = 180;
